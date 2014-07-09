@@ -50,6 +50,11 @@ void token::text(const string& str)
     _text = str;
 }
 
+bool token::good() const
+{
+    return _id != token_id::ILLIGEL;
+}
+
 bool token::iscontant() const
 {
     int id = static_cast<int>(_id);

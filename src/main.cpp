@@ -7,7 +7,7 @@
 
 #include "lex/lexexception.h"
 #include "lex/token.h"
-#include "lex/tokenizer.h"
+#include "lex/tkstream.h"
 
 namespace bf = boost::filesystem;
 
@@ -26,7 +26,7 @@ int main(int argc, char **argv)
         return -1;
     }
     
-    tokenizer tkz(fin);
+    tkstream tkz(fin);
     tkz.on_lex_exception([&](lex_exception& ex){
         cerr << p.filename() << ":" << ex.to_string() << endl;
     });

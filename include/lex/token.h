@@ -17,10 +17,14 @@ public:
     
     token_id id() const;
     void id(const token_id &tid);
+    
     text_pointer position() const;
     void position(const text_pointer &pointer);
+    
     const string& text() const;
     void text(const string& str);
+    
+    bool good() const;
     
     bool isreserved() const;
     bool isidentifier() const;

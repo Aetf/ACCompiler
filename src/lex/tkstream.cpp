@@ -4,41 +4,56 @@
 
 #include "lex/lexexception.h"
 #include "lex/token.h"
-#include "lex/tokenizer.h"
+#include "lex/tkstream.h"
 
 using std::istream;
 using std::string;
 
-tokenizer::tokenizer(std::istream &ins)
+tkstream::tkstream(std::istream &ins)
     :_ins(ins)
 {
     _good = true;
     _eof = false;
+    _fillbuf = true;
     _fsm.initiate();
     _fsm.on_lex_exception += [&](lex_exception &ex) {
     };
 }
 
-tokenizer::~tokenizer()
+tkstream::~tkstream()
 {
 }
 
-tokenizer::operator bool()
-{
-    return good();
-}
-
-void tokenizer::on_lex_exception(const std::function< void (lex_exception&)>& handler)
-{
-    _fsm.on_lex_exception += handler;
-}
-
-bool tokenizer::good() const
+bool tkstream::good() const
 {
     return _good;
 }
 
-token tokenizer::next()
+tkstream::operator bool() const
+{
+    return good();
+}
+
+token tkstream::peek()
+{
+    if(_fillbuf) {
+        try
+        {
+            fillbuf();
+        }
+        catch (std::ios_base::failure) {}
+        catch (lex_exception) {}
+    }
+    
+    return _tkbuf;
+}
+
+void tkstream::on_lex_exception(const std::function< void (lex_exception&)>& handler)
+{
+    _fsm.on_lex_exception += handler;
+}
+
+void tkstream::fillbuf()
 {
     if(_eof)
     {
@@ -72,10 +87,22 @@ token tokenizer::next()
         // rethrow to return
         throw;
     }
-    return state->gettoken();
+    
+    _tkbuf = state->gettoken();
+    _fillbuf = false;
 }
 
-tokenizer& operator>>(tokenizer& tkz, token& tk)
+token tkstream::next()
+{
+    if(_fillbuf) {
+        fillbuf();
+    }
+    
+    _fillbuf = true;
+    return _tkbuf;
+}
+
+tkstream& operator>>(tkstream& tkz, token& tk)
 {
     try
     {
@@ -92,7 +119,7 @@ tokenizer& operator>>(tokenizer& tkz, token& tk)
     return tkz;
 }
 
-void tokenizer::displayStatus(bool before)
+void tkstream::displayStatus(bool before)
 {
     std::cout << "Display status " << (before?"before":"after") << " enter:"<< std::endl;
     std::cout << "\tword: " << _fsm.word() << std::endl;
