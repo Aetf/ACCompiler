@@ -11,11 +11,12 @@ using std::unordered_map;
 enum class token_id : int
 {
     ILLIGEL,
-    REV_PROGRAM, REV_BEGIN, REV_END, REV_VAR, REV_INT,
-    REV_AND, REV_OR, REV_NOT, REV_IF, REV_THEN,REV_ELSE,
-    REV_WHILE,REV_DO,
-    OP_ADD, OP_MUL,OP_SUB,OP_DIV,
-    OP_LBRAC,OP_RBRAC,OP_DOT,
+    REV_PROGRAM, REV_BEGIN, REV_END, REV_VAR, 
+    REV_INT, REV_FLOAT, REV_CHAR,
+    REV_AND, REV_OR, REV_NOT, REV_IF, REV_THEN, REV_ELSE,
+    REV_WHILE, REV_DO, REV_FOR,
+    OP_ADD, OP_MUL, OP_SUB, OP_DIV,
+    OP_LBRAC, OP_RBRAC, OP_DOT,
     OP_ASSIGN,
     OP_GT, OP_LT, OP_EQ, OP_GE, OP_LE, OP_NE,
     DELIM_COMMA, DELIM_SEMI,
@@ -45,18 +46,21 @@ public:
     reserved_dict()
     {
         (*this)["program"] = token_id::REV_PROGRAM;
-        (*this)["begin"] = token_id::REV_BEGIN;
-        (*this)["end"] = token_id::REV_END;
+        (*this)["{"] = token_id::REV_BEGIN;
+        (*this)["}"] = token_id::REV_END;
         (*this)["var"] = token_id::REV_VAR;
         (*this)["int"] = token_id::REV_INT;
-        (*this)["and"] = token_id::REV_AND;
-        (*this)["or"] = token_id::REV_OR;
-        (*this)["not"] = token_id::REV_NOT;
+        (*this)["float"] = token_id::REV_FLOAT;
+        (*this)["char"] = token_id::REV_CHAR;
+        (*this)["&&"] = token_id::REV_AND;
+        (*this)["||"] = token_id::REV_OR;
+        (*this)["!"] = token_id::REV_NOT;
         (*this)["if"] = token_id::REV_IF;
         (*this)["then"] = token_id::REV_THEN;
         (*this)["else"] = token_id::REV_ELSE;
         (*this)["while"] = token_id::REV_WHILE;
         (*this)["do"] = token_id::REV_DO;
+        (*this)["for"] = token_id::REV_FOR;
     }
 };
 
@@ -72,13 +76,13 @@ public:
         (*this)["("] = token_id::OP_LBRAC;
         (*this)[")"] = token_id::OP_RBRAC;
         (*this)["."] = token_id::OP_DOT;
-        (*this)[":="] = token_id::OP_ASSIGN;
+        (*this)["="] = token_id::OP_ASSIGN;
         (*this)[">"] = token_id::OP_GT;
         (*this)["<"] = token_id::OP_LT;
-        (*this)["="] = token_id::OP_EQ;
+        (*this)["=="] = token_id::OP_EQ;
         (*this)[">="] = token_id::OP_GE;
         (*this)["<="] = token_id::OP_LE;
-        (*this)["<>"] = token_id::OP_NE;
+        (*this)["!="] = token_id::OP_NE;
     }
 };
 
