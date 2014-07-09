@@ -23,7 +23,7 @@ lex_sources += \
 	lex/textpointer.cpp \
 	lex/token.cpp \
 	lex/tokenfsm.cpp \
-	lex/tokenizer.cpp
+	lex/tkstream.cpp
 main_sources += \
 	main.cpp
 
