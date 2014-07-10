@@ -1,0 +1,13 @@
+int i, j, k;
+int func2 (int* p);
+int func1 (float f, char ch)
+{
+	i = f + ch;
+	func2 (&i);
+}
+
+int func2 (int *p)
+{
+	char str[12];
+	i = *p + 1;
+}

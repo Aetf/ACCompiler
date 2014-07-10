@@ -1,0 +1,5 @@
+int i;
+int func1 (float f, char ch)
+{
+	i = f + ch;
+}
