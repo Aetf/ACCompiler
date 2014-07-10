@@ -6,34 +6,17 @@
 #include "lex/tkstream.h"
 #include "lex/token.h"
 
-#define parse_use(nt) \
-    if (!(nt)->can_accept(input.peek())) { \
-        context.on_error(); \
-        res = false; \
-        goto exit; \
-    } \
-    if (!(nt)->parse(input, context)) { \
-        res = false; \
-        goto exit; \
-    }
-
-#define advance_if(tkid) \
-    if (input.peek().id() != (tkid)) { \
-        context.on_error(); \
-        res = false; \
-        goto exit; \
-    } \
-    input.advance();
+#include "analyzer/helpers.h"
 
 bool non_terminal::parse(tkstream& input, analyze_context& context)
 {
     if (!input.peek().good() && !accept_empty()) {
-        context.on_error();
+        context.on_error(input.peek());
         return false;
     }
     
     if (!can_accept(input.peek())) {
-        context.on_error();
+        context.on_error(input.peek());
         return false;
     }
     return true;
@@ -60,17 +43,11 @@ bool single_token::parse(tkstream& input, analyze_context& context)
         return false;
     }
     
-    token cur_tk = input.peek();
-    if(cur_tk.id() == tk_.id())
-    {
-        input >> tk_;
-        return true;
-    }
-    else
-    {
-        context.on_error();
-        return false;
-    }
+    bool res = true;
+    extract_to(tk_.id(), tk_);
+
+exit:
+    return res;
 }
 
 bool starter::parse(tkstream& input, analyze_context& context)
@@ -80,41 +57,22 @@ bool starter::parse(tkstream& input, analyze_context& context)
     }
     
     bool res = true;
-    decl_st *decl = new decl_st;
-    func_def *def = new func_def;
+    starter_part *part = new starter_part;
     opt_starter *more = new opt_starter;
     
-    if (decl->can_accept(input.peek())) {
-        if (!decl->parse(input, context)) {
-            res = false;
-            goto exit;
-        }
-    } else if (def->can_accept(input.peek())) {
-        if (!def->parse(input, context)) {
-            res = false;
-            goto exit;
-        }
-    } else {
-        context.on_error();
-        res = false;
-        goto exit;
-    }
-    
+    parse_use(part);
     parse_use(more);
     
 exit:
-    if (nullptr != decl) delete decl;
-    if (nullptr != def) delete def;
+    if (nullptr != part) delete part;
     if (nullptr != more) delete more;
     return res;
 }
 
 bool starter::can_accept(token cur_tk)
 {
-    decl_st d;
-    func_def def;
-    return d.can_accept(cur_tk)
-        || def.can_accept(cur_tk);
+    type_name tp;
+    return tp.can_accept(cur_tk);
 }
 
 bool statement::parse(tkstream& input, analyze_context& context)
@@ -173,7 +131,7 @@ bool statement::parse(tkstream& input, analyze_context& context)
             goto exit;
         }
     } else {
-        context.on_error();
+        context.on_error(input.peek());
         res = false;
         goto exit;
     }
@@ -490,22 +448,17 @@ bool decl_item::parse(tkstream& input, analyze_context& context)
         is_ptr_ = true;
     }
     
-    if (input.peek().id() == token_id::IDENTIFIER) {
-        input >> item_;
-        // TODO: assign symbol table entry
-    } else {
-        context.on_error();
-        res = false;
-        goto exit;
-    }
+    extract_to(token_id::IDENTIFIER, item_);
+    // TODO: assign symbol table entry
     
     // optional assignment expression
     if (input.peek().id() == token_id::OP_ASSIGN) {
         input.advance();
+        parse_use(exp);
+        
+        // TODO: assignment expression semantic
     }
-    parse_use(exp);
     
-    // TODO: assignment expression semantic
 exit:
     if (nullptr != exp) delete exp;
     return res;
@@ -526,7 +479,7 @@ bool type_name::parse(tkstream& input, analyze_context& context)
     bool res = true;
     is_ptr_ = false;
     if (!this->can_accept(input.peek())) {
-        context.on_error();
+        context.on_error(input.peek());
         res = false;
         goto exit;
     }
@@ -789,7 +742,7 @@ bool expr_lv3::parse(tkstream& input, analyze_context& context)
         }
         // TODO
     } else {
-        context.on_error();
+        context.on_error(input.peek());
         res = false;
         goto exit;
     }
@@ -819,13 +772,7 @@ bool expr_item::parse(tkstream& input, analyze_context& context)
     array_dim *ad = new array_dim;
     
     token id;
-    if (input.peek().id() == token_id::IDENTIFIER) {
-        input >> id;
-    } else {
-        context.on_error();
-        res = false;
-        goto exit;
-    }
+    extract_to(token_id::IDENTIFIER, id);
     
     if (input.peek().id() == token_id::OP_LBRAC) {
         parse_use(ap);
@@ -1042,7 +989,7 @@ bool bool_expr_lv3::parse(tkstream& input, analyze_context& context)
         }
         // TODO
     } else {
-        context.on_error();
+        context.on_error(input.peek());
         res = false;
         goto exit;
     }
@@ -1059,4 +1006,123 @@ bool bool_expr_lv3::can_accept(token cur_tk)
     expr exp;
     return cur_tk.id() == token_id::OP_LBRAC
         || exp.can_accept(cur_tk);
+}
+
+bool starter_part::parse(tkstream& input, analyze_context& context)
+{
+    if (!non_terminal::parse(input, context)) {
+        return false;
+    }
+    
+    bool res = true;
+    bool type_has_star = false;
+    token idtk;
+    
+    type_name *tp = new type_name;
+    decl_st_part *decl = new decl_st_part;
+    func_def_part *fdef = new func_def_part;
+    
+    parse_use(tp);
+    
+    if (input.peek().id() == token_id::OP_MUL) {
+        type_has_star = true;
+        input.advance();
+    }
+    
+    extract_to(token_id::IDENTIFIER, idtk);
+    
+    if (decl->can_accept(input.peek())) {
+        if (!decl->parse(input, context)) {
+            res = false;
+            goto exit;
+        }
+        // TODO: decl_st semantic
+    } else if (fdef->can_accept(input.peek())) {
+        if (!fdef->parse(input, context)) {
+            res = false;
+            goto exit;
+        }
+        
+        // TODO: func_def semantic
+    } else {
+        context.on_error(input.peek());
+        res = false;
+        goto exit;
+    }
+    
+exit:
+    if (nullptr != tp) delete tp;
+    if (nullptr != decl) delete decl;
+    if (nullptr != fdef) delete fdef;
+    return res;
+}
+
+bool starter_part::can_accept(token cur_tk)
+{
+    type_name tp;
+    return tp.can_accept(cur_tk);
+}
+
+bool decl_st_part::parse(tkstream& input, analyze_context& context)
+{
+    if (!non_terminal::parse(input, context)) {
+        return false;
+    }
+    
+    bool res = true;
+    
+    list_ = nullptr;
+    fst_exp_ = nullptr;
+    
+    if (input.peek().id() == token_id::OP_ASSIGN) {
+        input.advance();
+        fst_exp_ = new expr;
+        
+        parse_use(fst_exp_);
+    }
+    
+    if (input.peek().id() == token_id::DELIM_COMMA) {
+        list_ = new decl_list;
+        
+        input.advance();
+        parse_use(list_);
+        advance_if(token_id::DELIM_SEMI);
+    }    
+    
+    
+    // defered decl semantic in starter_part.
+exit:
+    return res;
+}
+
+bool decl_st_part::can_accept(token cur_tk)
+{
+    return true;
+}
+
+bool ret_st::parse(tkstream& input, analyze_context& context)
+{
+    if (!non_terminal::parse(input, context)) {
+        return false;
+    }
+    
+    bool res = true;
+    
+    opt_expr *oexp = new opt_expr;
+    
+    advance_if(token_id::REV_RETURN);
+    
+    parse_use(oexp);
+    
+    advance_if(token_id::DELIM_SEMI);
+
+    // function return
+exit:
+    if (nullptr != oexp) delete oexp;
+    return res;
+}
+
+bool ret_st::can_accept(token cur_tk)
+{
+    return cur_tk.id() == token_id::REV_RETURN;
 }

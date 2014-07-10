@@ -10,6 +10,8 @@ CXX = clang++
 CPPFLAGS ?= -std=c++11 -Wall -Werror
 CPPFLAGS_DEBUG = -DDEBUG -gdwarf-4
 CPPFLAGS_RELEASE = -O2
+CPPFLAGS += $(CPPFLAGS_DEBUG)
+
 LINKFLAGS ?= 
 LIBS += boost_system boost_filesystem
 

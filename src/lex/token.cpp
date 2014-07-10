@@ -107,7 +107,6 @@ const dictionary& token::delimiter()
 }
 
 
-
 bool token::isdelimiter(string str)
 {
     std::transform(str.begin(), str.end(), str.begin(), tolower);

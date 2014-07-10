@@ -3,32 +3,7 @@
 #include "analyzer/list_base.h"
 #include "lex/tkstream.h"
 
-#define parse_use(nt) \
-if (!(nt)->can_accept(input.peek())) { \
-    context.on_error(); \
-    res = false; \
-    goto exit; \
-    } \
-    if (!(nt)->parse(input, context)) { \
-        res = false; \
-        goto exit; \
-        }
-        
-#define advance_if(tkid) \
-    if (input.peek().id() != (tkid)) { \
-        context.on_error(); \
-        res = false; \
-        goto exit; \
-    } \
-    input.advance();
-    
-#define extract_to(tkid, tk) \
-    if (input.peek().id() != (tkid)) { \
-    context.on_error(); \
-    res = false; \
-    goto exit; \
-    } \
-    input >> (tk);
+#include "analyzer/helpers.h"
 
 func_base::func_base()
 {
@@ -87,7 +62,7 @@ bool func_def::parse(tkstream& input, analyze_context& context)
             goto exit;
         }
     } else {
-        context.on_error();
+        context.on_error(input.peek());
         res = false;
         goto exit;
     }
@@ -98,6 +73,55 @@ exit:
     if (nullptr != st) delete st;
     return res;
 }
+
+bool func_def_part::can_accept(token cur_tk)
+{
+    return cur_tk.id() == token_id::OP_LBRAC;
+}
+
+bool func_def_part::parse(tkstream& input, analyze_context& context)
+{
+    if (!non_terminal::parse(input, context)) {
+        return false;
+    }
+    
+    bool res = true;
+    type_name *tp = new type_name;
+    opt_fparams *fps = new opt_fparams;
+    block_st *bst = new block_st;
+    
+    token idtk;
+    parse_use(tp);
+    
+    extract_to(token_id::IDENTIFIER, idtk);
+    
+    advance_if(token_id::OP_LBRAC);
+    parse_use(fps);
+    advance_if(token_id::OP_RBRAC);
+    
+    // TODO: add to arg list
+    // TODO: name
+    
+    
+    if (input.peek().id() == token_id::DELIM_SEMI) {
+        sign_ = true;
+        input.advance();
+    } else {
+        sign_ = false;
+        parse_use(bst);
+        
+        // TODO: entry
+    }
+    
+    // TODO: type unknown, defered to starter_more
+    
+exit:
+    if (nullptr != tp) delete tp;
+    if (nullptr != fps) delete fps;
+    if (nullptr != bst) delete bst;
+    return res;
+}
+
 
 bool func_sign::can_accept(token cur_tk)
 {

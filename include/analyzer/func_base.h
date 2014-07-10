@@ -64,7 +64,19 @@ public:
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
     
-    bool only_sign() const;
+    bool only_sign() const { return sign_; }
+private:
+    bool sign_;
+};
+
+class func_def_part : public func_base
+{
+public:
+    virtual ~func_def_part() {}
+    virtual bool parse(tkstream& input, analyze_context& context) override;
+    virtual bool can_accept(token cur_tk) override;
+    
+    bool only_sign() const { return sign_; }
 private:
     bool sign_;
 };

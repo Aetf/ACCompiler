@@ -92,5 +92,4 @@ private:
     static linefeed_type _lftype;
 };
 
-
 #endif // TOKEN_H

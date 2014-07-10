@@ -2,24 +2,7 @@
 #include "analyzer/list_base.h"
 #include "lex/tkstream.h"
 
-#define parse_use(nt) \
-if (!(nt)->can_accept(input.peek())) { \
-    context.on_error(); \
-    res = false; \
-    goto exit; \
-    } \
-    if (!(nt)->parse(input, context)) { \
-        res = false; \
-        goto exit; \
-        }
-        
-        #define advance_if(tkid) \
-        if (input.peek().id() != (tkid)) { \
-            context.on_error(); \
-            res = false; \
-            goto exit; \
-            } \
-            input.advance();
+#include "analyzer/helpers.h"
 
 /*
  * list_base implementation
@@ -39,16 +22,7 @@ bool list_base<Item_Type>::parse(tkstream& input, analyze_context& context)
     list_more_base<Item_Type>* list_more = nullptr;
     
     list_more = create_list_more();
-    if(!list_more->can_accept(input.peek())) {
-        context.on_error();
-        res = false;
-        goto exit;
-    }
-    
-    if (!list_more->parse(input, context)) {
-        res = false;
-        goto exit;
-    }
+    parse_use(list_more);
     
     // merge the item list
     items().reserve(items().size() + list_more->items().size());
@@ -83,15 +57,7 @@ bool list_more_base<Item_Type>::parse(tkstream& input, analyze_context& context)
         }
         
         list = create_list();
-        if(!list->can_accept(input.peek())) {
-            context.on_error();
-            res = false;
-            goto exit;
-        }
-        if(!list->parse(input, context)) {
-            res = false;
-            goto exit;
-        }
+        parse_use(list);
         
         // merge the item list
         items().reserve(items().size() + list->items().size());
@@ -143,13 +109,7 @@ bool fparams::parse_single(tkstream& input, analyze_context& context)
     
     parse_use(tp);
     
-    if (input.peek().id() == token_id::IDENTIFIER) {
-        input >> idtk;
-    } else {
-        context.on_error();
-        res = false;
-        goto exit;
-    }
+    extract_to(token_id::IDENTIFIER, idtk);
     
     {
         func_arg arg(idtk.text(), tp->type_string());
@@ -187,19 +147,13 @@ bool aparams::can_accept(token cur_tk)
 
 bool aparams::parse_single(tkstream& input, analyze_context& context)
 {
+    bool res = true;
     expr exp;
-    if (!exp.can_accept(input.peek())) {
-        context.on_error();
-        return false;
-    }
-    
-    if (!exp.parse(input, context)) {
-        return false;
-    }
+    parse_use(&exp);
     
     items().push_back(exp);
-    
-    return true;
+exit:
+    return res;
 }
 
 list_more_base< expr >* aparams::create_list_more()
@@ -233,19 +187,14 @@ bool statements::can_accept(token cur_tk)
 
 bool statements::parse_single(tkstream& input, analyze_context& context)
 {
-    statement st;
-    if (!st.can_accept(input.peek())) {
-        context.on_error();
-        return false;
-    }
+    bool res = true;
     
-    if (!st.parse(input, context)) {
-        return false;
-    }
+    statement st;
+    parse_use(&st);
     
     // statement semantic
-    
-    return true;
+exit:
+    return res;
 }
 
 list_more_base< statement >* statements::create_list_more()
@@ -284,18 +233,14 @@ bool decl_list::can_accept(token cur_tk)
 
 bool decl_list::parse_single(tkstream& input, analyze_context& context)
 {
-    decl_item item;
-    if (!item.can_accept(input.peek())) {
-        context.on_error();
-        return false;
-    }
+    bool res = true;
     
-    if (!item.parse(input, context)) {
-        return false;
-    }
+    decl_item item;
+    parse_use(&item);
     
     items().push_back(item);
-    return true;
+exit:
+    return res;
 }
 
 
@@ -330,18 +275,12 @@ list_more_base<expr>* array_dim::create_list_more()
 
 bool array_dim::parse_single(tkstream& input, analyze_context& context)
 {
+    bool res = true;
     expr exp;
-    if (!exp.can_accept(input.peek())) {
-        context.on_error();
-        return false;
-    }
-    
-    if (!exp.parse(input, context)) {
-        return false;
-    }
+    parse_use(&exp);
     
     items().push_back(exp);
-    
+exit:
     return true;
 }
 
@@ -375,19 +314,13 @@ bool decl_sts::can_accept(token cur_tk)
 
 bool decl_sts::parse_single(tkstream& input, analyze_context& context)
 {
+    bool res = true;
     decl_st st;
-    if (!st.can_accept(input.peek())) {
-        context.on_error();
-        return false;
-    }
+    parse_use(&st);
     
-    if (!st.parse(input, context)) {
-        return false;
-    }
-    
-    // decl semantic
+    // TODO: decl semantic
     items().push_back(st);
-    
+exit:
     return true;
 }
 

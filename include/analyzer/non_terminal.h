@@ -7,6 +7,7 @@
 using std::string;
 
 class analyze_context;
+class decl_list;
 class tkstream;
 
 class non_terminal
@@ -314,6 +315,37 @@ class bool_expr_lv3 : public non_terminal
 {
 public:
     virtual ~bool_expr_lv3() {}
+    virtual bool parse(tkstream& input, analyze_context& context) override;
+    virtual bool can_accept(token cur_tk) override;
+};
+
+class starter_part : public non_terminal
+{
+public:
+    virtual ~starter_part() {}
+    virtual bool parse(tkstream& input, analyze_context& context) override;
+    virtual bool can_accept(token cur_tk) override;
+};
+
+class decl_st_part : public non_terminal
+{
+public:
+    virtual ~decl_st_part() {}
+    virtual bool parse(tkstream& input, analyze_context& context) override;
+    virtual bool can_accept(token cur_tk) override;
+    
+    expr* first_expr() { return fst_exp_; }
+    decl_list* item_list() { return list_; }
+    
+private:
+    expr *fst_exp_;
+    decl_list *list_;
+};
+
+class ret_st : public non_terminal
+{
+public:
+    virtual ~ret_st() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
 };

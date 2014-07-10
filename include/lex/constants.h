@@ -11,7 +11,7 @@ using std::unordered_map;
 enum class token_id : int
 {
     ILLIGEL,
-    REV_PROGRAM, REV_BEGIN, REV_END, REV_VAR,
+    REV_PROGRAM, REV_BEGIN, REV_END, REV_RETURN,
     REV_INT, REV_FLOAT, REV_CHAR,
     REV_AND, REV_OR, REV_NOT, REV_IF, REV_THEN, REV_ELSE,
     REV_WHILE, REV_DO, REV_FOR,
@@ -49,7 +49,7 @@ public:
         (*this)["program"] = token_id::REV_PROGRAM;
         (*this)["{"] = token_id::REV_BEGIN;
         (*this)["}"] = token_id::REV_END;
-        (*this)["var"] = token_id::REV_VAR;
+        (*this)["return"] = token_id::REV_RETURN;
         (*this)["int"] = token_id::REV_INT;
         (*this)["float"] = token_id::REV_FLOAT;
         (*this)["char"] = token_id::REV_CHAR;

@@ -8,7 +8,7 @@ std::ostream& operator<<(std::ostream &os, const token_id &id)
         case token_id::REV_PROGRAM: return os << "REV_PROGRAM";
         case token_id::REV_BEGIN: return os << "REV_BEGIN";
         case token_id::REV_END: return os << "REV_END";
-        case token_id::REV_VAR: return os << "REV_VAR";
+        case token_id::REV_RETURN: return os << "REV_RETURN";
         case token_id::REV_INT: return os << "REV_INT";
         case token_id::REV_FLOAT: return os << "REV_FLOAT";
         case token_id::REV_CHAR: return os << "REV_CHAR";
