@@ -11,12 +11,13 @@ using std::unordered_map;
 enum class token_id : int
 {
     ILLIGEL,
-    REV_PROGRAM, REV_BEGIN, REV_END, REV_VAR, 
+    REV_PROGRAM, REV_BEGIN, REV_END, REV_VAR,
     REV_INT, REV_FLOAT, REV_CHAR,
     REV_AND, REV_OR, REV_NOT, REV_IF, REV_THEN, REV_ELSE,
     REV_WHILE, REV_DO, REV_FOR,
     OP_ADD, OP_MUL, OP_SUB, OP_DIV,
-    OP_LBRAC, OP_RBRAC, OP_DOT,
+    OP_ADDR,
+    OP_LBRAC, OP_RBRAC, OP_DOT, OP_LSBRAC, OP_RSBRAC,
     OP_ASSIGN,
     OP_GT, OP_LT, OP_EQ, OP_GE, OP_LE, OP_NE,
     DELIM_COMMA, DELIM_SEMI,
@@ -83,6 +84,9 @@ public:
         (*this)[">="] = token_id::OP_GE;
         (*this)["<="] = token_id::OP_LE;
         (*this)["!="] = token_id::OP_NE;
+        (*this)["&"] = token_id::OP_ADDR;
+        (*this)["["] = token_id::OP_LSBRAC;
+        (*this)["]"] = token_id::OP_RSBRAC;
     }
 };
 

@@ -10,6 +10,8 @@ std::ostream& operator<<(std::ostream &os, const token_id &id)
         case token_id::REV_END: return os << "REV_END";
         case token_id::REV_VAR: return os << "REV_VAR";
         case token_id::REV_INT: return os << "REV_INT";
+        case token_id::REV_FLOAT: return os << "REV_FLOAT";
+        case token_id::REV_CHAR: return os << "REV_CHAR";
         case token_id::REV_AND: return os << "REV_AND";
         case token_id::REV_OR: return os << "REV_OR";
         case token_id::REV_NOT: return os << "REV_NOT";
@@ -24,7 +26,10 @@ std::ostream& operator<<(std::ostream &os, const token_id &id)
         case token_id::OP_DIV: return os << "OP_DIV";
         case token_id::OP_LBRAC: return os << "OP_LBRAC";
         case token_id::OP_RBRAC: return os << "OP_RBRAC";
+        case token_id::OP_LSBRAC: return os << "OP_LSBRAC";
+        case token_id::OP_RSBRAC: return os << "OP_RSBRAC";
         case token_id::OP_DOT: return os << "OP_DOT";
+        case token_id::OP_ADDR: return os << "OP_ADDR";
         case token_id::OP_ASSIGN: return os << "OP_ASSIGN";
         case token_id::OP_GT: return os << "OP_GT";
         case token_id::OP_LT: return os << "OP_LT";

@@ -19,6 +19,7 @@ public:
     operator bool() const;
     
     token peek();
+    token advance();
     
     void on_lex_exception(const std::function<void (lex_exception&)> &);
     

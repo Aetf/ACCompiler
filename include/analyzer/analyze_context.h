@@ -6,6 +6,10 @@ class analyze_context
 public:
     void on_error();
     
+    int generate();
+    
+    int next_address() const;
+    
 };
 
 #endif

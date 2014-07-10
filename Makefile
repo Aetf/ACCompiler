@@ -24,6 +24,11 @@ lex_sources += \
 	lex/token.cpp \
 	lex/tokenfsm.cpp \
 	lex/tkstream.cpp
+ana_sources += \
+	analyzer/analyze_context.cpp \
+	analyzer/func_base.cpp \
+	analyzer/list_base.cpp \
+	analyzer/non_terminal.cpp
 main_sources += \
 	main.cpp
 
@@ -33,6 +38,7 @@ main_sources += \
 # Build object file list
 SRC = \
 	$(lex_sources) \
+	$(ana_sources) \
 	$(main_sources)
 OBJS=$(addprefix $(INTM), $(patsubst %.cpp,%.o,$(SRC)))
 

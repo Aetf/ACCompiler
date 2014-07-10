@@ -1,13 +1,38 @@
+#include "analyzer/analyze_context.h"
 #include "analyzer/func_base.h"
+#include "analyzer/list_base.h"
+#include "lex/tkstream.h"
+
+#define parse_use(nt) \
+if (!(nt)->can_accept(input.peek())) { \
+    context.on_error(); \
+    res = false; \
+    goto exit; \
+    } \
+    if (!(nt)->parse(input, context)) { \
+        res = false; \
+        goto exit; \
+        }
+        
+#define advance_if(tkid) \
+    if (input.peek().id() != (tkid)) { \
+        context.on_error(); \
+        res = false; \
+        goto exit; \
+    } \
+    input.advance();
+    
+#define extract_to(tkid, tk) \
+    if (input.peek().id() != (tkid)) { \
+    context.on_error(); \
+    res = false; \
+    goto exit; \
+    } \
+    input >> (tk);
 
 func_base::func_base()
 {
     entry_ = -1;
-}
-
-bool func_base::accept_empty()
-{
-    return false;
 }
 
 void func_base::name(const string& new_name)
@@ -30,7 +55,78 @@ int func_base::entry() const
     return entry_;
 }
 
-vector< func_arg >& func_base::args() const
+vector< func_arg >& func_base::args()
 {
     return args_;
+}
+
+bool func_def::can_accept(token cur_tk)
+{
+    func_sign sign;
+    return sign.can_accept(cur_tk);
+}
+
+bool func_def::parse(tkstream& input, analyze_context& context)
+{
+    if (!non_terminal::parse(input, context)) {
+        return false;
+    }
+    
+    bool res = true;
+    func_sign *sign = new func_sign;
+    block_st *st = new block_st;
+    
+    sign_ = true;
+    parse_use(sign);
+    
+    if (input.peek().id() == token_id::DELIM_SEMI) {
+        input.advance();
+    } else if (st->can_accept(input.peek())) {
+        if (!st->parse(input, context)) {
+            res = false;
+            goto exit;
+        }
+    } else {
+        context.on_error();
+        res = false;
+        goto exit;
+    }
+    
+    // TODO: Add to symbol table
+exit:
+    if (nullptr != sign) delete sign;
+    if (nullptr != st) delete st;
+    return res;
+}
+
+bool func_sign::can_accept(token cur_tk)
+{
+    type_name tp;
+    return tp.can_accept(cur_tk);
+}
+
+bool func_sign::parse(tkstream& input, analyze_context& context)
+{
+    if (!non_terminal::parse(input, context)) {
+        return false;
+    }
+    
+    bool res = true;
+    type_name *tp = new type_name;
+    opt_fparams *fps = new opt_base< fparams >;
+    
+    token idtk;
+    parse_use(tp);
+    
+    extract_to(token_id::IDENTIFIER, idtk);
+    
+    advance_if(token_id::OP_LBRAC);
+    parse_use(fps);
+    advance_if(token_id::OP_RBRAC);
+    
+    // TODO: semantic
+exit:
+    if (nullptr != tp) delete tp;
+    if (nullptr != fps) delete fps;
+    return res;
 }

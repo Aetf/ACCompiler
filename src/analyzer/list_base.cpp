@@ -2,7 +2,30 @@
 #include "analyzer/list_base.h"
 #include "lex/tkstream.h"
 
-bool list_base::parse(tkstream& input, analyze_context& context)
+#define parse_use(nt) \
+if (!(nt)->can_accept(input.peek())) { \
+    context.on_error(); \
+    res = false; \
+    goto exit; \
+    } \
+    if (!(nt)->parse(input, context)) { \
+        res = false; \
+        goto exit; \
+        }
+        
+        #define advance_if(tkid) \
+        if (input.peek().id() != (tkid)) { \
+            context.on_error(); \
+            res = false; \
+            goto exit; \
+            } \
+            input.advance();
+
+/*
+ * list_base implementation
+ */
+template <typename Item_Type>
+bool list_base<Item_Type>::parse(tkstream& input, analyze_context& context)
 {
     if(!non_terminal::parse(input, context)) {
         return false;
@@ -13,10 +36,10 @@ bool list_base::parse(tkstream& input, analyze_context& context)
     }
     
     bool res = true;
-    list_more_base* list_more = nullptr;
+    list_more_base<Item_Type>* list_more = nullptr;
     
     list_more = create_list_more();
-    if(!list_more->can_accept()) {
+    if(!list_more->can_accept(input.peek())) {
         context.on_error();
         res = false;
         goto exit;
@@ -30,22 +53,18 @@ bool list_base::parse(tkstream& input, analyze_context& context)
     // merge the item list
     items().reserve(items().size() + list_more->items().size());
     items().insert(items().end(), list_more->items().begin(), list_more->items().end());
-    
+
+exit:
     if(nullptr != list_more) delete list_more;
     return true;
 }
 
-bool list_base::accept_empty()
-{
-    return false;
-}
 
-vector< non_terminal >& list_base::items() const
-{
-    return items_;
-}
-
-bool list_more_base::parse(tkstream& input, analyze_context& context)
+/*
+ * list_base_more implementation
+ */
+template <typename Item_Type>
+bool list_more_base<Item_Type>::parse(tkstream& input, analyze_context& context)
 {
     if(!non_terminal::parse(input, context)) {
         return false;
@@ -53,7 +72,7 @@ bool list_more_base::parse(tkstream& input, analyze_context& context)
     
     bool res = true;
     non_terminal *sep = nullptr;
-    list_base *list = nullptr;
+    list_base<Item_Type> *list = nullptr;
     
     sep = create_sep();
     if(sep->can_accept(input.peek()))
@@ -89,13 +108,301 @@ exit:
     return res;
 }
 
-bool list_more_base::accept_empty()
+template <typename Item_Type>
+bool list_more_base<Item_Type>::accept_empty()
 {
     return true;
 }
 
-vector<non_terminal>& list_more_base::items() const
+template <typename Item_Type>
+bool list_more_base<Item_Type>::can_accept(token cur_tk)
 {
-    return items_;
+    return true;
 }
+
+
+/*
+ * fparams implementation
+ */
+list_more_base<func_arg>* fparams::create_list_more()
+{
+    return new fparams_more;
+}
+
+bool fparams::can_accept(token cur_tk)
+{
+    type_name tp;
+    return tp.can_accept(cur_tk);
+}
+
+bool fparams::parse_single(tkstream& input, analyze_context& context)
+{
+    bool res = true;
+    token idtk;
+    type_name *tp = new type_name;
+    
+    parse_use(tp);
+    
+    if (input.peek().id() == token_id::IDENTIFIER) {
+        input >> idtk;
+    } else {
+        context.on_error();
+        res = false;
+        goto exit;
+    }
+    
+    {
+        func_arg arg(idtk.text(), tp->type_string());
+        items().push_back(arg);
+    }
+    
+exit:
+    if (nullptr != tp) delete tp;
+    return res;
+}
+
+
+/*
+ * fparams_more implementation
+ */
+non_terminal* fparams_more::create_sep()
+{
+    return new single_token(token_id::DELIM_COMMA);
+}
+
+list_base< func_arg >* fparams_more::create_list()
+{
+    return new fparams;
+}
+
+
+/*
+ * aparams implementation
+ */
+bool aparams::can_accept(token cur_tk)
+{
+    expr exp;
+    return exp.can_accept(cur_tk);
+}
+
+bool aparams::parse_single(tkstream& input, analyze_context& context)
+{
+    expr exp;
+    if (!exp.can_accept(input.peek())) {
+        context.on_error();
+        return false;
+    }
+    
+    if (!exp.parse(input, context)) {
+        return false;
+    }
+    
+    items().push_back(exp);
+    
+    return true;
+}
+
+list_more_base< expr >* aparams::create_list_more()
+{
+    return new aparams_more;
+}
+
+
+/*
+ * aparams_more implementation
+ */
+non_terminal* aparams_more::create_sep()
+{
+    return new single_token(token_id::DELIM_COMMA);
+}
+
+list_base< expr >* aparams_more::create_list()
+{
+    return new aparams;
+}
+
+
+/*
+ * statements implementation
+ */
+bool statements::can_accept(token cur_tk)
+{
+    statement st;
+    return st.can_accept(cur_tk);
+}
+
+bool statements::parse_single(tkstream& input, analyze_context& context)
+{
+    statement st;
+    if (!st.can_accept(input.peek())) {
+        context.on_error();
+        return false;
+    }
+    
+    if (!st.parse(input, context)) {
+        return false;
+    }
+    
+    // statement semantic
+    
+    return true;
+}
+
+list_more_base< statement >* statements::create_list_more()
+{
+    return new statements_more;
+}
+
+
+/*
+ * statements_more implementation
+ */
+non_terminal* statements_more::create_sep()
+{
+    return new epsilon;
+}
+
+list_base< statement >* statements_more::create_list()
+{
+    return new statements;
+}
+
+
+/*
+ * decl_list implementation
+ */
+list_more_base<decl_item>* decl_list::create_list_more()
+{
+    return new decl_list_more;
+}
+
+bool decl_list::can_accept(token cur_tk)
+{
+    decl_item item;
+    return item.can_accept(cur_tk);
+}
+
+bool decl_list::parse_single(tkstream& input, analyze_context& context)
+{
+    decl_item item;
+    if (!item.can_accept(input.peek())) {
+        context.on_error();
+        return false;
+    }
+    
+    if (!item.parse(input, context)) {
+        return false;
+    }
+    
+    items().push_back(item);
+    return true;
+}
+
+
+/*
+ * decl_list_more implementation
+ */
+non_terminal* decl_list_more::create_sep()
+{
+    return new single_token(token_id::DELIM_COMMA);
+}
+
+list_base<decl_item>* decl_list_more::create_list()
+{
+    return new decl_list;
+}
+
+
+/*
+ * array_dim implementation
+ */
+
+bool array_dim::can_accept(token cur_tk)
+{
+    expr exp;
+    return exp.can_accept(cur_tk);
+}
+
+list_more_base<expr>* array_dim::create_list_more()
+{
+    return new array_dim_more;
+}
+
+bool array_dim::parse_single(tkstream& input, analyze_context& context)
+{
+    expr exp;
+    if (!exp.can_accept(input.peek())) {
+        context.on_error();
+        return false;
+    }
+    
+    if (!exp.parse(input, context)) {
+        return false;
+    }
+    
+    items().push_back(exp);
+    
+    return true;
+}
+
+/*
+ * array_dim_more implementation
+ */
+non_terminal* array_dim_more::create_sep()
+{
+    return new single_token(token_id::DELIM_COMMA);
+}
+
+list_base< expr >* array_dim_more::create_list()
+{
+    return new array_dim;
+}
+
+
+/*
+ * decl_sts implementation
+ */
+list_more_base<decl_st>* decl_sts::create_list_more()
+{
+    return new decl_sts_more;
+}
+
+bool decl_sts::can_accept(token cur_tk)
+{
+    decl_st st;
+    return st.can_accept(cur_tk);
+}
+
+bool decl_sts::parse_single(tkstream& input, analyze_context& context)
+{
+    decl_st st;
+    if (!st.can_accept(input.peek())) {
+        context.on_error();
+        return false;
+    }
+    
+    if (!st.parse(input, context)) {
+        return false;
+    }
+    
+    // decl semantic
+    items().push_back(st);
+    
+    return true;
+}
+
+
+/*
+ * decl_sts_more implementation
+ */
+non_terminal* decl_sts_more::create_sep()
+{
+    return new epsilon;
+}
+
+list_base< decl_st >* decl_sts_more::create_list()
+{
+    return new decl_sts;
+}
+
 

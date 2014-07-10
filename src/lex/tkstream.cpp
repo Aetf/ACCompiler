@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
+#include <boost/concept_check.hpp>
 
 #include "lex/lexexception.h"
 #include "lex/token.h"
@@ -46,6 +47,13 @@ token tkstream::peek()
     }
     
     return _tkbuf;
+}
+
+token tkstream::advance()
+{
+    token tk;
+    *this >> tk;
+    return tk;
 }
 
 void tkstream::on_lex_exception(const std::function< void (lex_exception&)>& handler)

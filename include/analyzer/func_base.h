@@ -9,17 +9,24 @@
 using std::string;
 using std::vector;
 
-struct func_arg;
 class token;
+
+struct func_arg
+{
+    func_arg(const string& n = "", const string& t = "") 
+        :name(n), type(t) { }
+    string name;
+    string type;
+};
 
 /**
  * Base class for all function related non_terminals
  */
-class func_base : non_terminal
+class func_base : public non_terminal
 {
 public:
+    virtual ~func_base() {}
     func_base();
-    virtual bool accept_empty() override;
     
     /**
      * Get and set the name of the function.
@@ -36,7 +43,7 @@ public:
     /**
      * Get the vector of function arguments
      */
-    vector<func_arg>& args() const;
+    vector<func_arg>& args();
 protected:
     
 private:
@@ -45,9 +52,39 @@ private:
     int entry_;
 };
 
-struct func_arg
+
+/*
+ * Classes derived from func_base
+ */
+
+class func_def : public func_base
 {
-    string name;
-    string type;
+public:
+    virtual ~func_def() {}
+    virtual bool parse(tkstream& input, analyze_context& context) override;
+    virtual bool can_accept(token cur_tk) override;
+    
+    bool only_sign() const;
+private:
+    bool sign_;
 };
+
+class func_sign : public func_base
+{
+public:
+    virtual ~func_sign() {}
+    virtual bool parse(tkstream& input, analyze_context& context) override;
+    virtual bool can_accept(token cur_tk) override;
+};
+
+/*
+class func_call : public func_base
+{
+public:
+    virtual ~func_call() {}
+    virtual bool parse(tkstream& input, analyze_context& context) override;
+    virtual bool can_accept(token cur_tk) override;
+};
+*/
+
 #endif
