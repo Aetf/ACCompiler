@@ -46,6 +46,7 @@ public:
     static bool isopfront(int ch);
     static bool isdlfront(int ch);
     static bool isquote(int ch);
+    static bool issquote(int ch);
     static bool isdot(int ch);
     static bool isescapse(int ch);
     static bool isslash(int ch);

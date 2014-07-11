@@ -33,6 +33,20 @@ bool Token_fsm::update_pos(int ch)
     if(needclear)
     {
         needclear = false;
+        
+        // throw any deffered exceptions
+        for (auto exp : deffered_ex_)
+        {
+            // we have a complete line now,
+            // replace the old one
+            exp->line_ = line_;
+            try
+            {
+                on_lex_exception(*exp);
+            } catch (...) {}
+        }
+        deffered_ex_.clear();
+        
         line_ = "";
         
         capturingCommentBlkStart_ = false;
@@ -99,8 +113,9 @@ void Token_fsm::raise_illegal_character(int ch)
 {
     try
     {
-        illegal_char_exception ex(ch, current_pos(), line_);
-        on_lex_exception(ex);
+        auto ex = new illegal_char_exception(ch, current_pos(), line_);
+        // not sure we have a full line, defered the exception
+        deffered_ex_.push_back(ex);
     } catch(...) {}
 }
 
@@ -108,8 +123,25 @@ void Token_fsm::raise_missing_quote()
 {
     try
     {
-        missing_quote_exception ex(quoteStartPos_, quoteStartLine_);
-        on_lex_exception(ex);
+        if (!deffered_ex_.empty()) {
+            // there are some exception deffered,
+            // must deffer this one too to preserve order
+            auto ex = new missing_quote_exception(quoteStartPos_, quoteStartLine_);
+            deffered_ex_.push_back(ex);
+        } else {
+            missing_quote_exception ex(quoteStartPos_, quoteStartLine_);
+            on_lex_exception(ex);
+        }
+    } catch(...) {}
+}
+
+void Token_fsm::raise_missing_squote()
+{
+    try
+    {
+        auto ex = new missing_squote_exception(current_pos(), line_);
+        // not sure we have a full line, defered the exception
+        deffered_ex_.push_back(ex);
     } catch(...) {}
 }
 
@@ -117,9 +149,17 @@ void Token_fsm::raise_unterminated_comment()
 {
     try
     {
-        unterminated_comment_exception ex(commentBlkStartPos_,
-                                          commentBlkStartLine_);
-        on_lex_exception(ex);
+        if (!deffered_ex_.empty()) {
+            // there are some exception deffered,
+            // must deffer this one too to preserve order
+            auto ex = new unterminated_comment_exception(commentBlkStartPos_,
+                                                  commentBlkStartLine_);
+            deffered_ex_.push_back(ex);
+        } else {
+            unterminated_comment_exception ex(commentBlkStartPos_,
+                                       commentBlkStartLine_);
+            on_lex_exception(ex);
+        }
     } catch(...) {}
 }
 
@@ -149,6 +189,12 @@ sc::result StBlank::react(const EvChar &evt)
         outermost_context().append(ch);
         outermost_context().start_quote();
         return transit<StString>();
+        
+    } else if(token::issquote(ch))
+    {
+        outermost_context().update_pos(ch);
+        outermost_context().append(ch);
+        return transit<StChar>();
         
     } else if(token::isslash(ch))
     {
@@ -282,6 +328,58 @@ sc::result StString::react(const EvChar &evt)
     }
     else
     {
+        outermost_context().append(ch);
+        return discard_event();
+    }
+}
+
+sc::result StChar::react(const EvChar &evt)
+{
+    char ch = evt.what();
+    
+    // update position, and use the return value
+    // to determine if we are at the end of a line.
+    bool islast = outermost_context().update_pos(ch);
+    if(token::isescapse(ch))
+    {
+        // this is an backslash, indicates the next char should be escaped,
+        // no need to append it.
+        return transit<StString_ESCP>();
+    } else if(token::issquote(ch))
+    {
+        outermost_context().append(ch);
+        return transit<StToken_Char>();
+    } else if(islast)
+    {
+        //outermost_context().append(ch);
+        
+        outermost_context().raise_missing_squote();
+        // try to recovery from the error
+        // if the string as some contents, add a '"'
+        // otherwise skip it
+        if(outermost_context().word().length() > 1)
+        {
+            outermost_context().append('\'');
+            return transit<StToken_Char>();
+        }
+        else
+        {
+            // discard the word cache and restart.
+            outermost_context().reset();
+            return transit<StBlank>();
+        }
+    }
+    else
+    {
+        // char only allow one character between squote
+        if(outermost_context().word().length() >= 2)
+        {
+            // error
+            outermost_context().raise_missing_squote();
+            // discard the word cache and restart.
+            outermost_context().reset();
+            return transit<StBlank>();
+        }
         outermost_context().append(ch);
         return discard_event();
     }
@@ -492,6 +590,19 @@ token StToken_String::gettoken() const
     tk.id(token_id::CONST_STR);
     tk.text(outermost_context().word());
     tk.position(outermost_context().last_quote());
+    
+    return tk;
+}
+
+token StToken_Char::gettoken() const
+{
+    token tk;
+    tk.id(token_id::CONST_CHAR);
+    tk.text(outermost_context().word());
+    tk.position(text_pointer(
+        outermost_context().current_pos().line,
+        outermost_context().current_pos().col - 3
+    ));
     
     return tk;
 }

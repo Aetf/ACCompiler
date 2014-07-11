@@ -37,6 +37,15 @@ public:
     virtual const char* what() const throw() override;
 };
 
+class missing_squote_exception : public lex_exception
+{
+public:
+    missing_squote_exception(const text_pointer &pos = text_pointer(),
+                            const string &line = "");
+    
+    virtual const char* what() const throw() override;
+};
+
 class unterminated_comment_exception : public lex_exception
 {
 public:

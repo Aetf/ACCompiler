@@ -183,6 +183,11 @@ bool token::isquote(int ch)
     return ch == '"';
 }
 
+bool token::issquote(int ch)
+{
+    return ch == '\'';
+}
+
 bool token::isdot(int ch)
 {
     return ch == '.';

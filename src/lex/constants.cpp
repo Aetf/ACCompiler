@@ -46,6 +46,7 @@ std::ostream& operator<<(std::ostream &os, const token_id &id)
         case token_id::CONST_FLOAT: return os << "CONST_FLOAT";
         case token_id::CONST_STR: return os << "CONST_STR";
         case token_id::CONST_BOOL: return os << "CONST_BOOL";
+        case token_id::CONST_CHAR: return os << "CONST_CHAR";
         case token_id::COMMENT: return os << "COMMENT";
         case token_id::IDENTIFIER: return os << "IDENTIFIER";
         default: return os << "(invalid value)";

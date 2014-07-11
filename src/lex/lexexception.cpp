@@ -52,6 +52,18 @@ const char* missing_quote_exception::what() const throw()
     return "missing terminating '\"' character";
 }
 
+missing_squote_exception::missing_squote_exception(const text_pointer &pos,
+                                                 const string &line)
+:lex_exception(pos, line)
+{
+    
+}
+
+const char* missing_squote_exception::what() const throw()
+{
+    return "missing terminating '\'' character";
+}
+
 unterminated_comment_exception::unterminated_comment_exception(const text_pointer &pos,
                                                                const string &line)
 :lex_exception(text_pointer(pos.line, pos.col - 1), line)

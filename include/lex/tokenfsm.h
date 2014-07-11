@@ -2,6 +2,7 @@
 #define TOKEN_FSM_H
 
 #include <string>
+#include <vector>
 
 #include <boost/mpl/list.hpp>
 #include <boost/statechart/custom_reaction.hpp>
@@ -115,6 +116,7 @@ public:
      * Will automatic add line and position info.
      */
     void raise_illegal_character(int ch);
+    void raise_missing_squote();
     void raise_missing_quote();
     void raise_unterminated_comment();
     
@@ -130,6 +132,8 @@ private:
     text_pointer commentBlkStartPos_;
     std::string commentBlkStartLine_;
     bool capturingCommentBlkStart_ = false;
+    
+    std::vector<lex_exception*> deffered_ex_;
 };
 
 /**
@@ -169,6 +173,7 @@ DECLEAR_STATE_CLASS(StAlphaNum)
 DECLEAR_STATE_CLASS(StNumber)
 DECLEAR_STATE_CLASS(StNumber_Has_Dot)
 DECLEAR_STATE_CLASS(StString)
+DECLEAR_STATE_CLASS(StChar)
 DECLEAR_STATE_CLASS(StString_ESCP)
 DECLEAR_STATE_CLASS(StSlash)
 DECLEAR_STATE_CLASS(StComment_Block)
@@ -209,6 +214,7 @@ DECLEAR_FINAL_STATE_CLASS(StToken_Identifier)
 DECLEAR_FINAL_STATE_CLASS(StToken_Reserved)
 DECLEAR_FINAL_STATE_CLASS(StToken_Int)
 DECLEAR_FINAL_STATE_CLASS(StToken_Float)
+DECLEAR_FINAL_STATE_CLASS(StToken_Char)
 DECLEAR_FINAL_STATE_CLASS(StToken_String)
 DECLEAR_FINAL_STATE_CLASS(StToken_Operator)
 DECLEAR_FINAL_STATE_CLASS(StToken_Delimiter)
