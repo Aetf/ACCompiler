@@ -21,30 +21,32 @@ int main(int argc, char **argv)
 {
     for (int ncase = 1; ncase <= 6; ncase++)
     {
-        ostringstream oss;
-        oss << "tests/case" << ncase << ".acc";
-        path p(oss.str());
+        ostringstream oss1, oss2;
+        oss1 << "tests/case" << ncase << ".acc";
+        oss2 << "tests/case" << ncase << ".acc.intm";
+        path pin(oss1.str());
         
-        cout << "Compiling file " << p.c_str() << endl;
         
-        bf::ifstream fin(p);
+        cout << "Compiling file " << pin.c_str() << endl;
+        
+        bf::ifstream fin(pin);
         if(!fin)
         {
-            cerr << "File " << p.c_str() << " can't be accessed." << endl;
+            cerr << "File " << pin.c_str() << " can't be accessed." << endl;
             return -1;
         }
         
         tkstream tkz(fin);
         tkz.on_lex_exception([&](lex_exception& ex){
-            cerr << p.filename() << ":" << ex.to_string() << endl;
+            cerr << pin.filename() << ":" << ex.to_string() << endl;
         });
         
         starter S;
-        analyze_context context;
+        analyze_context context(oss2.str());
         
         S.parse(tkz, context);
         
-        cout << "File " << p.c_str() << " done." << endl;
+        cout << "File " << pin.c_str() << " done." << endl;
     }
     return 0;
 }

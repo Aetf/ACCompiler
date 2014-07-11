@@ -28,14 +28,16 @@ public:
         }
         
         bool res = true;
+        empty_ = true;
         if (act_nt_->can_accept(input.peek())) {
             if (!act_nt_->parse(input, context)) {
                 res = false;
                 goto exit;
             }
+            empty_ = false;
         }
         
-        exit:
+    exit:
         return res;
     }
     
@@ -49,10 +51,18 @@ public:
         return true;
     }
     
+    bool empty()
+    {
+        return empty_;
+    }
+    
     NtType* actual_nt()
     {
         return act_nt_;
     }
+private:
+
+    bool empty_;
     NtType* act_nt_;
 };
 #endif // OPT_BASE_H

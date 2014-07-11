@@ -1,6 +1,7 @@
 #include "analyzer/analyze_context.h"
 #include "analyzer/func_base.h"
 #include "analyzer/list_base.h"
+#include "analyzer/expression.h"
 #include "lex/tkstream.h"
 
 #include "analyzer/helpers.h"
@@ -99,21 +100,63 @@ bool func_def_part::parse(tkstream& input, analyze_context& context)
     parse_use(fps);
     advance_if(token_id::OP_RBRAC);
     
-    // TODO: add to arg list
-    // TODO: name
-    
-    
-    if (input.peek().id() == token_id::DELIM_SEMI) {
-        sign_ = true;
-        input.advance();
-    } else {
-        sign_ = false;
-        parse_use(bst);
-        
-        // TODO: entry
+    // declaration
+    {
+        string sign;
+        func_entry entry;
+        int arg_cnt = 0;
+        if (fps->empty()) {
+            if (!context.table().new_function(name_, ret_type_, sign)) {
+                entry = context.table().find_func_entry(sign);
+                
+                string msg = "Functions that differ only in their return type cannot be overloaded\n";
+                msg += ret_type_ + " " + sign + ";\n";
+                msg += "Previous declaration: \n" + entry->second.ret_type() + " " + sign + ";";
+                context.on_error(msg);
+                res = false;
+                goto exit;
+            }
+        } else {
+            if (!context.table().new_function(name_, ret_type_, fps->actual_nt()->items(), sign)) {
+                entry = context.table().find_func_entry(sign);
+                
+                string msg = "Functions that differ only in their return type cannot be overloaded\n";
+                msg += ret_type_ + " " + sign + ";\n";
+                msg += "Previous declaration: \n" + entry->second.ret_type() + " " + sign + ";";
+                context.on_error(msg);
+                res = false;
+                goto exit;
+            }
+            arg_cnt = fps->actual_nt()->items().size();
+        }    
+        // implementation
+        if (input.peek().id() == token_id::DELIM_SEMI) {
+            sign_ = true;
+            input.advance();
+        } else {
+            // function body
+            sign_ = false;
+            context.curr_func(entry);
+            int addr = context.next_address();
+            //    save registers
+            context.generate("push", "ebp", "", "");
+            context.generate("mov", "esp", "", "ebp");
+            context.generate("pusha", "", "", "");
+            //    push a symbol table
+            context.table().push_level();
+            //    statements
+            parse_use(bst);        
+            // function return;
+            //    pop registers
+            context.back_patch(bst->nextlist(), context.next_address());
+            context.generate("popa", "", "", "");
+            context.generate("mov", "ebp", "", "esp");
+            context.generate("pop", "ebp", "", "");
+            context.generate("ret", arg_cnt, "", "");
+            
+            entry->second.entry(addr);
+        }
     }
-    
-    // TODO: type unknown, defered to starter_more
     
 exit:
     if (nullptr != tp) delete tp;

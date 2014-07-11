@@ -2,11 +2,14 @@
 #define NON_TERMINAL_H
 
 #include <string>
+#include <vector>
 
 #include "lex/token.h"
 using std::string;
+using std::vector;
 
 class analyze_context;
+class expr;
 class decl_list;
 class tkstream;
 
@@ -74,6 +77,10 @@ public:
     virtual ~statement() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
+    
+    vector<int>& nextlist() { return nextlist_; }
+private:
+    vector<int> nextlist_;
 };
 
 class block_st : public non_terminal
@@ -82,6 +89,10 @@ public:
     virtual ~block_st() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
+    
+    vector<int>& nextlist() { return nextlist_; }
+private:
+    vector<int> nextlist_;
 };
 
 class decl_st : public non_terminal
@@ -98,6 +109,10 @@ public:
     virtual ~if_st() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
+    
+    vector<int>& nextlist() { return nextlist_; }
+private:
+    vector<int> nextlist_;
 };
 
 class else_st : public non_terminal
@@ -106,6 +121,9 @@ public:
     virtual ~else_st() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
+    vector<int>& nextlist() { return nextlist_; }
+private:
+    vector<int> nextlist_;
 };
 
 class while_st : public non_terminal
@@ -114,6 +132,10 @@ public:
     virtual ~while_st() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
+    
+    vector<int>& nextlist() { return nextlist_; }
+private:
+    vector<int> nextlist_;
 };
 
 class do_while_st : public non_terminal
@@ -122,6 +144,10 @@ public:
     virtual ~do_while_st() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
+    
+    vector<int>& nextlist() { return nextlist_; }
+private:
+    vector<int> nextlist_;
 };
 
 class for_st : public non_terminal
@@ -130,6 +156,10 @@ public:
     virtual ~for_st() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
+    
+    vector<int>& nextlist() { return nextlist_; }
+private:
+    vector<int> nextlist_;
 };
 
 class empty_st : public non_terminal
@@ -138,6 +168,10 @@ public:
     virtual ~empty_st() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
+    
+    vector<int>& nextlist() { return nextlist_; }
+private:
+    vector<int> nextlist_;
 };
 
 class expr_st : public non_terminal
@@ -146,18 +180,10 @@ public:
     virtual ~expr_st() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
-};
-
-class decl_item : public non_terminal
-{
-public:
-    virtual ~decl_item() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
     
+    vector<int>& nextlist() { return nextlist_; }
 private:
-    token item_;
-    bool is_ptr_;
+    vector<int> nextlist_;
 };
 
 class type_name : public non_terminal
@@ -199,126 +225,6 @@ private:
     int address_;
 };
 
-class expr : public non_terminal
-{
-public:
-    virtual ~expr() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class expr_h : public non_terminal
-{
-public:
-    virtual ~expr_h() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class expr_lv1 : public non_terminal
-{
-public:
-    virtual ~expr_lv1() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class expr_lv1_h : public non_terminal
-{
-public:
-    virtual ~expr_lv1_h() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class expr_lv2 : public non_terminal
-{
-public:
-    virtual ~expr_lv2() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class expr_lv2_h : public non_terminal
-{
-public:
-    virtual ~expr_lv2_h() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class expr_lv3 : public non_terminal
-{
-public:
-    virtual ~expr_lv3() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class expr_item : public non_terminal
-{
-public:
-    virtual ~expr_item() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class bool_expr : public non_terminal
-{
-public:
-    virtual ~bool_expr() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class bool_expr_h : public non_terminal
-{
-public:
-    virtual ~bool_expr_h() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class bool_expr_lv1 : public non_terminal
-{
-public:
-    virtual ~bool_expr_lv1() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class bool_expr_lv1_h : public non_terminal
-{
-public:
-    virtual ~bool_expr_lv1_h() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class bool_expr_lv2 : public non_terminal
-{
-public:
-    virtual ~bool_expr_lv2() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class bool_expr_lv2_h : public non_terminal
-{
-public:
-    virtual ~bool_expr_lv2_h() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-class bool_expr_lv3 : public non_terminal
-{
-public:
-    virtual ~bool_expr_lv3() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
 class starter_part : public non_terminal
 {
 public:
@@ -330,7 +236,9 @@ public:
 class decl_st_part : public non_terminal
 {
 public:
-    virtual ~decl_st_part() {}
+    decl_st_part(const string& name, const string& type)
+        :name_(name), type_(type) { }
+    virtual ~decl_st_part() { }
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
     
@@ -340,6 +248,8 @@ public:
 private:
     expr *fst_exp_;
     decl_list *list_;
+    string name_;
+    string type_;
 };
 
 class ret_st : public non_terminal
@@ -348,6 +258,36 @@ public:
     virtual ~ret_st() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
+    vector<int>& nextlist() { return nextlist_; }
+private:
+    vector<int> nextlist_;
+};
+
+class statements : public non_terminal
+{
+public:
+    virtual ~statements() {}
+    virtual bool parse(tkstream& input, analyze_context& context) override;
+    virtual bool can_accept(token cur_tk) override;
+    vector<int>& nextlist() { return nextlist_; }
+private:
+    vector<int> nextlist_;
+};
+
+class decl_item : public non_terminal
+{
+public:
+    decl_item(const string& base_type) : base_type_(base_type) { }
+    virtual ~decl_item() {}
+    virtual bool parse(tkstream& input, analyze_context& context) override;
+    virtual bool can_accept(token cur_tk) override;
+    
+    string name() const { return item_.text(); }
+    expr* init_expr() const { return init_expr_; }
+private:
+    token item_;
+    expr* init_expr_;
+    string base_type_;
 };
 
 /*

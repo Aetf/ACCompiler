@@ -1,8 +1,13 @@
+#include <sstream>
+
 #include "analyzer/analyze_context.h"
 #include "analyzer/list_base.h"
+#include "analyzer/expression.h"
 #include "lex/tkstream.h"
 
 #include "analyzer/helpers.h"
+
+using std::istringstream;
 
 /*
  * list_base implementation
@@ -177,57 +182,16 @@ list_base< expr >* aparams_more::create_list()
 
 
 /*
- * statements implementation
- */
-bool statements::can_accept(token cur_tk)
-{
-    statement st;
-    return st.can_accept(cur_tk);
-}
-
-bool statements::parse_single(tkstream& input, analyze_context& context)
-{
-    bool res = true;
-    
-    statement st;
-    parse_use(&st);
-    
-    // statement semantic
-exit:
-    return res;
-}
-
-list_more_base< statement >* statements::create_list_more()
-{
-    return new statements_more;
-}
-
-
-/*
- * statements_more implementation
- */
-non_terminal* statements_more::create_sep()
-{
-    return new epsilon;
-}
-
-list_base< statement >* statements_more::create_list()
-{
-    return new statements;
-}
-
-
-/*
  * decl_list implementation
  */
 list_more_base<decl_item>* decl_list::create_list_more()
 {
-    return new decl_list_more;
+    return new decl_list_more(base_type_);
 }
 
 bool decl_list::can_accept(token cur_tk)
 {
-    decl_item item;
+    decl_item item(base_type_);
     return item.can_accept(cur_tk);
 }
 
@@ -235,7 +199,7 @@ bool decl_list::parse_single(tkstream& input, analyze_context& context)
 {
     bool res = true;
     
-    decl_item item;
+    decl_item item(base_type_);
     parse_use(&item);
     
     items().push_back(item);
@@ -254,7 +218,7 @@ non_terminal* decl_list_more::create_sep()
 
 list_base<decl_item>* decl_list_more::create_list()
 {
-    return new decl_list;
+    return new decl_list(base_type_);
 }
 
 
@@ -318,8 +282,6 @@ bool decl_sts::parse_single(tkstream& input, analyze_context& context)
     decl_st st;
     parse_use(&st);
     
-    // TODO: decl semantic
-    items().push_back(st);
 exit:
     return true;
 }
@@ -339,3 +301,47 @@ list_base< decl_st >* decl_sts_more::create_list()
 }
 
 
+/*
+ * int_list implementation
+ */
+list_more_base<int>* int_list::create_list_more()
+{
+    return new int_list_more;
+}
+
+bool int_list::can_accept(token cur_tk)
+{
+    return cur_tk.id() == token_id::CONST_INT;
+}
+
+bool int_list::parse_single(tkstream& input, analyze_context& context)
+{
+    bool res = true;
+    token c;
+    int value;
+    
+    extract_to(token_id::CONST_INT, c);
+    
+    {
+        istringstream iss(c.text());
+        iss >> value;
+    }
+    
+    items().push_back(value);
+exit:
+    return true;
+}
+
+
+/*
+ * int_list_more implementation
+ */
+non_terminal* int_list_more::create_sep()
+{
+    return new single_token(token_id::DELIM_COMMA);
+}
+
+list_base< int >* int_list_more::create_list()
+{
+    return new int_list;
+}

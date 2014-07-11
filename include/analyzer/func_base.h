@@ -72,13 +72,20 @@ private:
 class func_def_part : public func_base
 {
 public:
+    func_def_part(const string &name, const string &ret_type)
+        : name_(name), ret_type_(ret_type) { }
     virtual ~func_def_part() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
     
     bool only_sign() const { return sign_; }
+    
+    int entry() const { return entry_; }
 private:
     bool sign_;
+    int entry_;
+    string name_;
+    string ret_type_;
 };
 
 class func_sign : public func_base

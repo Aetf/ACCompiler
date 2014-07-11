@@ -27,10 +27,15 @@ lex_sources += \
 	lex/tokenfsm.cpp \
 	lex/tkstream.cpp
 ana_sources += \
+	analyzer/acc_types.cpp \
 	analyzer/analyze_context.cpp \
+	analyzer/expression.cpp \
 	analyzer/func_base.cpp \
 	analyzer/list_base.cpp \
-	analyzer/non_terminal.cpp
+	analyzer/non_terminal.cpp \
+	analyzer/symbol_table.cpp
+intem_sources += \
+	interm/quadruple.cpp
 main_sources += \
 	main.cpp
 
@@ -41,6 +46,7 @@ main_sources += \
 SRC = \
 	$(lex_sources) \
 	$(ana_sources) \
+	$(intem_sources) \
 	$(main_sources)
 OBJS=$(addprefix $(INTM), $(patsubst %.cpp,%.o,$(SRC)))
 
@@ -55,7 +61,13 @@ endef
 $(TARGET): $(OBJS)
 	$(CXX) $(CPPFLAGS) -o $(TARGET) $(addprefix -l, $(LIBS)) $(OBJS)
 
-obj/lex/%.o: src/lex/%.cpp
+obj/lex/%.o: src/lex/%.cpp include/lex/%.h
+	$(call compile_cmd) -o $@ $<
+
+obj/analyzer/%.o: src/analyzer/%.cpp include/analyzer/%.h
+	$(call compile_cmd) -o $@ $<
+
+obj/interm/%.o: src/interm/%.cpp include/interm/%.h
 	$(call compile_cmd) -o $@ $<
 
 obj/%.o: src/%.cpp

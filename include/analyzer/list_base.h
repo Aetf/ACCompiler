@@ -119,20 +119,26 @@ protected:
 class decl_list : public list_base<decl_item>
 {
 public:
+    decl_list(const string& base_type) :base_type_(base_type) { }
     virtual ~decl_list() {}
     virtual bool can_accept(token cur_tk) override;
 protected:
     virtual bool parse_single(tkstream& input, analyze_context& context) override;
     virtual list_more_base<decl_item>* create_list_more() override;
+private:
+    string base_type_;
 };
 
 class decl_list_more : public list_more_base<decl_item>
 {
 public:
+    decl_list_more(const string& base_type) :base_type_(base_type) { }
     virtual ~decl_list_more() {}
 protected:
     virtual non_terminal* create_sep() override;
     virtual list_base<decl_item>* create_list() override;
+private:
+    string base_type_;
 };
 
 class array_dim : public list_base<expr>
@@ -154,6 +160,25 @@ protected:
     virtual list_base<expr>* create_list() override;
 };
 
+class int_list : public list_base<int>
+{
+public:
+    virtual ~int_list() {}
+    virtual bool can_accept(token cur_tk) override;
+protected:
+    virtual bool parse_single(tkstream& input, analyze_context& context) override;
+    virtual list_more_base<int>* create_list_more() override;
+};
+
+class int_list_more : public list_more_base<int>
+{
+public:
+    virtual ~int_list_more() {}
+protected:
+    virtual non_terminal* create_sep() override;
+    virtual list_base<int>* create_list() override;
+};
+
 class decl_sts : public list_base<decl_st>
 {
 public:
@@ -171,25 +196,6 @@ public:
 protected:
     virtual non_terminal* create_sep() override;
     virtual list_base<decl_st>* create_list() override;
-};
-
-class statements : public list_base<statement>
-{
-public:
-    virtual ~statements() {}
-    virtual bool can_accept(token cur_tk) override;
-protected:
-    virtual bool parse_single(tkstream& input, analyze_context& context) override;
-    virtual list_more_base<statement>* create_list_more() override;
-};
-
-class statements_more : public list_more_base<statement>
-{
-public:
-    virtual ~statements_more() {}
-protected:
-    virtual non_terminal* create_sep() override;
-    virtual list_base<statement>* create_list() override;
 };
 
 /*
