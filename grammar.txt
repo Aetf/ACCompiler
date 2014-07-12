@@ -1,0 +1,100 @@
+S -> S_part S_more
+
+S_part -> type_name ( <empty> | <*> ) <id> ( decl_st_part | func_def_part )
+
+S_more -> <empty> | S
+
+func_def_part -> <(> opt_fparams <)> ( block_st | <;> )
+
+type_name -> <int> | <float> | <char> | <int> <*> | <float> <*> | <char> <*>
+
+opt_fparams -> fparams | <empty>
+
+fparams -> type_name <id> fparams_more
+
+fparams_more -> <empty> | <,> fparams
+
+block_st -> <{> opt_decl_sts statements <}>
+
+opt_decl_sts -> <empty> | decl_sts
+
+decl_sts -> decl_st decl_sts_more
+
+decl_sts_more -> <empty> | decl_sts
+
+statements -> statement ( <empty> | statements )
+
+statement -> decl_st | block_st | if_st | while_st | do_while_st | for_st | empty_st | expr_st | ret_st
+
+ret_st -> <return> opt_expr <;>
+
+decl_st -> type_name decl_list <;>
+
+decl_st_part -> ( <=> expr | <[> int_list <]> | <empty> ) ( <,> decl_list | <empty> ) <;>
+
+decl_list -> decl_item decl_list_more
+
+decl_list_more -> <empty> | <,> decl_list
+
+decl_item -> ( <empty>|<*> ) <id> (<empty> | <=> expr | <[> int_list <]>)
+
+int_list -> <const_int> int_list_more
+
+int_list_more -> <empty> | <,> int_list
+
+if_st -> <if> <(> bool_expr <)> statment opt_else_st
+
+opt_else_st -> <empty> | else_st
+
+else_st -> <else> statement
+
+while_st -> <while> <(> bool_expr <)> statement
+
+do_while_st -> <do> statement <while> <(> bool_expr <)> <;>
+
+for_st -> <for> <(> expr <;> bool_expr <;> expr <)> statement
+
+empty_st -> <;>
+
+bool_expr -> bool_expr_lv1 bool_expr_h
+
+bool_expr_h -> <empty> | <||> bool_expr_lv1 bool_expr_h
+
+bool_expr_lv1 -> bool_expr_lv2 bool_expr_lv1_h
+
+bool_expr_lv1_h -> <empty> | <&&> bool_expr_lv2 bool_expr_lv1_h
+
+bool_expr_lv2 -> ( <empty> | <!> ) bool_expr_item
+
+bool_expr_item -> ( expr_lv2 ( <empty> | <==> expr_lv2 | <!=> expr_lv2 | <>=> expr_lv2 | <<=> expr_lv2 | <>> expr_lv2 | <<> expr_lv2 ) ) 
+					| <const> | <(> bool_expr <)>
+
+expr_st -> expr <;>
+
+expr -> expr_lv0 expr_h
+
+expr_h -> <empty> | <=> expr_lv0 expr_h
+
+expr_lv0 -> expr_lv1 expr_lv0_h
+
+expr_lv0_h -> <empty> | <+> expr_lv1 expr_lv0_h | <-> expr_lv1 expr_lv0_h
+
+expr_lv1 -> expr_lv2 expr_lv1_h
+
+expr_lv1_h -> <empty> | <*> expr_lv2 expr_lv1_h | </> expr_lv2 expr_lv1_h
+
+expr_lv2 -> ( <&> | <-> | <*> | <empty> ) ( expr_item | <(> expr <)> )
+
+expr_item -> ( <id> (<empty> | <(> opt_aparams <)> | <[> array_dim <]>) ) | <const>
+
+array_dim -> expr array_dim_more
+
+array_dim_more -> <empty> | <,> array_dim
+
+opt_aparams -> aparams | <empty>
+
+aparams -> expr aparams_more
+
+aparams_more -> <empty> | <,> aparams
+
+opt_expr -> expr | <empty>
