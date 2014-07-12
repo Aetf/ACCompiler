@@ -44,9 +44,14 @@ int main(int argc, char **argv)
         starter S;
         analyze_context context(oss2.str());
         
-        S.parse(tkz, context);
+        if (S.parse(tkz, context)) {
+            // output the intermidiate code
+            context.flush();
+            cout << "done.\n" << endl;
+        } else {
+            cout << "Errors found.\n" << endl;
+        }
         
-        cout << "File " << pin.c_str() << " done." << endl;
     }
     return 0;
 }

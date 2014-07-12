@@ -1,5 +1,7 @@
 #include <sstream>
+#include <string>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
@@ -13,7 +15,9 @@ lex_exception::lex_exception(const text_pointer &pos,
                              const string &line)
     :pos_(pos), line_(line)
 {
-    boost::erase_all(line_, token::curr_linefeed());
+    if (boost::algorithm::ends_with(line_, token::curr_linefeed())) {
+        line_.erase(line_.size() - token::curr_linefeed().size());
+    }
 }
 
 lex_exception::~lex_exception() throw()
@@ -26,10 +30,14 @@ const char* lex_exception::relavent_line() const throw()
 
 const char* lex_exception::to_string() const throw()
 {
+    string line(boost::replace_all_copy(line_, "\t", " "));
+    if (boost::algorithm::ends_with(line, token::curr_linefeed())) {
+        line.erase(line.size() - token::curr_linefeed().size());
+    }
     
     ostringstream os;
     os << where().line << ":" << where().col << ": error: " << what() << '\n'
-       << boost::replace_all_copy(line_, "\t", " ") << '\n'
+    << line << '\n'
        << string(where().col-1, ' ') << '^';
     return os.str().c_str();
 }

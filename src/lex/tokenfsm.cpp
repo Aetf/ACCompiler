@@ -202,12 +202,12 @@ sc::result StBlank::react(const EvChar &evt)
         outermost_context().append(ch);
         return transit<StSlash>();
         
-    } else if(token::isopfront(ch))
+    } else if(token::OP_RPAREN(ch))
     {
         outermost_context().update_pos(ch);
         outermost_context().append(ch);
         return transit<StOp_Partial>();
-    } else if(token::isdlfront(ch))
+    } else if(token::isdlchar(ch))
     {
         outermost_context().update_pos(ch);
         outermost_context().append(ch);

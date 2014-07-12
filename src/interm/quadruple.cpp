@@ -14,9 +14,9 @@ string quadruple::str() const
 {
     ostringstream oss;
     oss << addr_ << " ("
-                << (op_.empty() ? " - " : op_)
-                << (arg1_.empty() ? " - " : arg1_)
-                << (arg2_.empty() ? " - " : arg2_)
+                << (op_.empty() ? " - " : op_) << ", "
+                << (arg1_.empty() ? " - " : arg1_) << ", "
+                << (arg2_.empty() ? " - " : arg2_) << ", "
                 << (dest_.empty() ? " - " : dest_)
                 <<")";
     return oss.str();

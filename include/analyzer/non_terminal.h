@@ -4,41 +4,14 @@
 #include <string>
 #include <vector>
 
+#include "analyzer/non_terminal_base.h"
 #include "lex/token.h"
+
 using std::string;
 using std::vector;
 
-class analyze_context;
 class expr;
 class decl_list;
-class tkstream;
-
-class non_terminal
-{
-public:
-    virtual ~non_terminal() {}
-    
-    /**
-     * Parse using this non_terminal
-     * @param input the tokenstream of the input file.
-     * @param context the compiler context.
-     * @return true on succeed.
-     */
-    virtual bool parse(tkstream& input, analyze_context& context);
-    
-    /**
-     * Whether the token is in this non_terminal's FIRST collection.
-     * @return true if the cur_tk is found in the FIRST collection, otherwise false.
-     */
-    virtual bool can_accept(token cur_tk) = 0;
-    
-    /**
-     * Whether this non_terminal accept empty string.
-     * Default is false.
-     * @return true if accept otherwise false.
-     */
-    virtual bool accept_empty();
-};
 
 class single_token : public non_terminal
 {
@@ -242,12 +215,7 @@ public:
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
     
-    expr* first_expr() { return fst_exp_; }
-    decl_list* item_list() { return list_; }
-    
 private:
-    expr *fst_exp_;
-    decl_list *list_;
     string name_;
     string type_;
 };

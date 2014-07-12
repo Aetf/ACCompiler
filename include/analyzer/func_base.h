@@ -57,18 +57,6 @@ private:
  * Classes derived from func_base
  */
 
-class func_def : public func_base
-{
-public:
-    virtual ~func_def() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-    
-    bool only_sign() const { return sign_; }
-private:
-    bool sign_;
-};
-
 class func_def_part : public func_base
 {
 public:
@@ -87,23 +75,5 @@ private:
     string name_;
     string ret_type_;
 };
-
-class func_sign : public func_base
-{
-public:
-    virtual ~func_sign() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-
-/*
-class func_call : public func_base
-{
-public:
-    virtual ~func_call() {}
-    virtual bool parse(tkstream& input, analyze_context& context) override;
-    virtual bool can_accept(token cur_tk) override;
-};
-*/
 
 #endif

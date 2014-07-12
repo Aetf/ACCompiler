@@ -33,6 +33,7 @@ analyze_context::analyze_context(const std::string& output_file)
     :sym_table_(this)
 {
     o_path_ = output_file;
+    in_func_ = false;
 }
 
 void analyze_context::on_error(token cur_tk)
@@ -45,9 +46,31 @@ void analyze_context::on_error(const string &msg)
     std::cout << msg << std::endl;
 }
 
+void analyze_context::on_error(const string& msg, const text_pointer& pointer)
+{
+    ostringstream os;
+    string line_;
+    os << pointer.line << ":" << pointer.col << ": error: " << msg << '\n'
+    << line_ << '\n'
+    << string(pointer.col-1, ' ') << '^';
+    
+    std::cout << os.str() << std::endl;
+}
+
 void analyze_context::on_critical(const string &msg)
 {
     std::cout << msg << std::endl;
+}
+
+void analyze_context::on_critical(const string& msg, const text_pointer& pointer, const string& line)
+{
+    ostringstream os;
+    string line_(line);
+    os << pointer.line << ":" << pointer.col << ": error: " << msg << '\n'
+    << line_ << '\n'
+    << string(pointer.col-1, ' ') << '^';
+    
+    std::cout << os.str() << std::endl;
 }
 
 func_entry analyze_context::curr_func() const
@@ -55,9 +78,15 @@ func_entry analyze_context::curr_func() const
     return curr_func_;
 }
 
-void analyze_context::curr_func(func_entry entry)
+void analyze_context::enter_func(func_entry entry)
 {
     curr_func_ = entry;
+    in_func_ = true;
+}
+
+void analyze_context::exit_func()
+{
+    in_func_ = false;
 }
 
 int analyze_context::next_address() const

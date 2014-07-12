@@ -1,8 +1,10 @@
 #ifndef OPT_BASE_H
 #define OPT_BASE_H
 
-#include "analyzer/non_terminal.h"
+#include "analyzer/non_terminal_base.h"
 #include "lex/tkstream.h"
+
+class non_terminal;
 
 /**
  * Base class for all non-terminal which accepts empty string
@@ -51,7 +53,7 @@ public:
         return true;
     }
     
-    bool empty()
+    bool empty() const
     {
         return empty_;
     }

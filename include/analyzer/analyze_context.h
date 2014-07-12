@@ -51,7 +51,8 @@ public:
     bool entry_of(const string& name, variable_desc& desc);
     
     func_entry curr_func() const;
-    void curr_func(func_entry entry);
+    void enter_func(func_entry entry);
+    void exit_func();
     
     vector<quadruple>& codes() { return codes_; }
     
@@ -65,6 +66,7 @@ private:
     vector<quadruple> codes_;
     symbol_table sym_table_;
     func_entry curr_func_;
+    bool in_func_;
 };
 
 #endif

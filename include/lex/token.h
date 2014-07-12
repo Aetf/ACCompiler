@@ -43,8 +43,8 @@ public:
     static bool isalnum(int ch);
     static bool isalpha(int ch);
     static bool isdigit(int ch);
-    static bool isopfront(int ch);
-    static bool isdlfront(int ch);
+    static bool OP_RPAREN(int ch);
+    static bool isdlchar(int ch);
     static bool isquote(int ch);
     static bool issquote(int ch);
     static bool isdot(int ch);

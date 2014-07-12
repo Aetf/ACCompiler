@@ -54,8 +54,20 @@ bool list_more_base<Item_Type>::parse(tkstream& input, analyze_context& context)
     list_base<Item_Type> *list = nullptr;
     
     sep = create_sep();
-    if(sep->can_accept(input.peek()))
-    {   // list_more -> sep list_base
+    if (sep == nullptr) {
+        // list_more -> list_base
+        list = create_list();
+        if (list->can_accept(input.peek())) {
+            if (!list->parse(input, context)) {
+                res = false;
+                goto exit;
+            }
+            // merge the item list
+            items().reserve(items().size() + list->items().size());
+            items().insert(items().end(), list->items().begin(), list->items().end());
+        }
+    } else if(sep->can_accept(input.peek())) {
+        // list_more -> sep list_base
         if(!sep->parse(input, context)) {
             res = false;
             goto exit;
@@ -67,10 +79,6 @@ bool list_more_base<Item_Type>::parse(tkstream& input, analyze_context& context)
         // merge the item list
         items().reserve(items().size() + list->items().size());
         items().insert(items().end(), list->items().begin(), list->items().end());
-    }
-    else
-    {   // list_more_base -> <empty>
-        // do nothing
     }
     
 exit:
@@ -292,7 +300,7 @@ exit:
  */
 non_terminal* decl_sts_more::create_sep()
 {
-    return new epsilon;
+    return nullptr;
 }
 
 list_base< decl_st >* decl_sts_more::create_list()

@@ -5,6 +5,7 @@
 symbol_table::symbol_table(analyze_context* pContext)
 {
     pContext_ = pContext;
+    temp_seed_ = 0;
     // push the global table
     push_level();
 }
@@ -78,7 +79,11 @@ bool symbol_table::new_function(const string& name, const string& ret_type,
     
     item.entry(-1);
     functions_[item.signature()] = item;
-    
+    return true;
+}
+
+void symbol_table::new_func_params(const vector<func_arg>& args)
+{
     // add parameter as variable
     int offset = 0;
     for (auto arg : args)
@@ -90,7 +95,6 @@ bool symbol_table::new_function(const string& name, const string& ret_type,
         arg_ent->second.is_parameter(true);
         offset += size_of(arg.type);
     }
-    return true;
 }
 
 bool symbol_table::new_function(const string& name, const string& ret_type, string& sign)

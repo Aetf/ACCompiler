@@ -36,48 +36,9 @@ vector< func_arg >& func_base::args()
     return args_;
 }
 
-bool func_def::can_accept(token cur_tk)
-{
-    func_sign sign;
-    return sign.can_accept(cur_tk);
-}
-
-bool func_def::parse(tkstream& input, analyze_context& context)
-{
-    if (!non_terminal::parse(input, context)) {
-        return false;
-    }
-    
-    bool res = true;
-    func_sign *sign = new func_sign;
-    block_st *st = new block_st;
-    
-    sign_ = true;
-    parse_use(sign);
-    
-    if (input.peek().id() == token_id::DELIM_SEMI) {
-        input.advance();
-    } else if (st->can_accept(input.peek())) {
-        if (!st->parse(input, context)) {
-            res = false;
-            goto exit;
-        }
-    } else {
-        context.on_error(input.peek());
-        res = false;
-        goto exit;
-    }
-    
-    // TODO: Add to symbol table
-exit:
-    if (nullptr != sign) delete sign;
-    if (nullptr != st) delete st;
-    return res;
-}
-
 bool func_def_part::can_accept(token cur_tk)
 {
-    return cur_tk.id() == token_id::OP_LBRAC;
+    return cur_tk.id() == token_id::OP_LPAREN;
 }
 
 bool func_def_part::parse(tkstream& input, analyze_context& context)
@@ -87,113 +48,72 @@ bool func_def_part::parse(tkstream& input, analyze_context& context)
     }
     
     bool res = true;
-    type_name *tp = new type_name;
+    func_entry entry;
     opt_fparams *fps = new opt_fparams;
     block_st *bst = new block_st;
     
-    token idtk;
-    parse_use(tp);
-    
-    extract_to(token_id::IDENTIFIER, idtk);
-    
-    advance_if(token_id::OP_LBRAC);
+    advance_if(token_id::OP_LPAREN);
     parse_use(fps);
-    advance_if(token_id::OP_RBRAC);
+    advance_if(token_id::OP_RPAREN);
     
     // declaration
     {
         string sign;
-        func_entry entry;
-        int arg_cnt = 0;
-        if (fps->empty()) {
-            if (!context.table().new_function(name_, ret_type_, sign)) {
-                entry = context.table().find_func_entry(sign);
-                
-                string msg = "Functions that differ only in their return type cannot be overloaded\n";
-                msg += ret_type_ + " " + sign + ";\n";
-                msg += "Previous declaration: \n" + entry->second.ret_type() + " " + sign + ";";
-                context.on_error(msg);
-                res = false;
-                goto exit;
-            }
-        } else {
-            if (!context.table().new_function(name_, ret_type_, fps->actual_nt()->items(), sign)) {
-                entry = context.table().find_func_entry(sign);
-                
-                string msg = "Functions that differ only in their return type cannot be overloaded\n";
-                msg += ret_type_ + " " + sign + ";\n";
-                msg += "Previous declaration: \n" + entry->second.ret_type() + " " + sign + ";";
-                context.on_error(msg);
-                res = false;
-                goto exit;
-            }
-            arg_cnt = fps->actual_nt()->items().size();
-        }    
-        // implementation
-        if (input.peek().id() == token_id::DELIM_SEMI) {
-            sign_ = true;
-            input.advance();
-        } else {
-            // function body
-            sign_ = false;
-            context.curr_func(entry);
-            int addr = context.next_address();
-            //    save registers
-            context.generate("push", "ebp", "", "");
-            context.generate("mov", "esp", "", "ebp");
-            context.generate("pusha", "", "", "");
-            //    push a symbol table
-            context.table().push_level();
-            //    statements
-            parse_use(bst);        
-            // function return;
-            //    pop registers
-            context.back_patch(bst->nextlist(), context.next_address());
-            context.generate("popa", "", "", "");
-            context.generate("mov", "ebp", "", "esp");
-            context.generate("pop", "ebp", "", "");
-            context.generate("ret", arg_cnt, "", "");
+        if (!context.table().new_function(name_, ret_type_, fps->actual_nt()->items(), sign)) {
+            entry = context.table().find_func_entry(sign);
             
-            entry->second.entry(addr);
+            string msg = "Functions that differ only in their return type cannot be overloaded\n";
+            msg += ret_type_ + " " + sign + ";\n";
+            msg += "Previous declaration: \n" + entry->second.ret_type() + " " + sign + ";";
+            context.on_error(msg);
+            res = false;
+            goto exit;
         }
+        entry = context.table().find_func_entry(sign);
+    }
+    
+    // implementation
+    if (input.peek().id() == token_id::DELIM_SEMI) {
+        sign_ = true;
+        input.advance();
+    } else {
+        // function body
+        sign_ = false;
+        // enter function
+        context.enter_func(entry);
+        int addr = context.next_address();
+        //    save registers
+        context.generate("push", "ebp", "", "");
+        context.generate("mov", "esp", "", "ebp");
+        context.generate("pusha", "", "", "");
+        //    push a symbol table
+        context.table().push_level();
+        context.table().new_func_params(entry->second.args());
+        //    statements
+        parse_use(bst);
+        // function return;
+        //    pop registers
+        context.back_patch(bst->nextlist(), context.next_address());
+        context.generate("popa", "", "", "");
+        context.generate("mov", "ebp", "", "esp");
+        context.generate("pop", "ebp", "", "");
+        //    total args size
+        int args_size = 0;
+        for (auto arg : entry->second.args())
+        {
+            args_size += size_of(arg.type);
+        }
+        context.generate("ret", args_size, "", "");
+        //    pop symbol table
+        context.table().pop_level();
+        //    exit function
+        context.exit_func();
+        
+        entry->second.entry(addr);
     }
     
 exit:
-    if (nullptr != tp) delete tp;
     if (nullptr != fps) delete fps;
     if (nullptr != bst) delete bst;
-    return res;
-}
-
-
-bool func_sign::can_accept(token cur_tk)
-{
-    type_name tp;
-    return tp.can_accept(cur_tk);
-}
-
-bool func_sign::parse(tkstream& input, analyze_context& context)
-{
-    if (!non_terminal::parse(input, context)) {
-        return false;
-    }
-    
-    bool res = true;
-    type_name *tp = new type_name;
-    opt_fparams *fps = new opt_base< fparams >;
-    
-    token idtk;
-    parse_use(tp);
-    
-    extract_to(token_id::IDENTIFIER, idtk);
-    
-    advance_if(token_id::OP_LBRAC);
-    parse_use(fps);
-    advance_if(token_id::OP_RBRAC);
-    
-    // TODO: semantic
-exit:
-    if (nullptr != tp) delete tp;
-    if (nullptr != fps) delete fps;
     return res;
 }

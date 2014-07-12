@@ -65,9 +65,6 @@ bool starter::parse(tkstream& input, analyze_context& context)
     parse_use(part);
     parse_use(more);
     
-    // output the intermidiate code
-    context.flush();
-    
 exit:
     if (nullptr != part) delete part;
     if (nullptr != more) delete more;
@@ -106,31 +103,31 @@ bool statement::parse(tkstream& input, analyze_context& context)
             res = false;
             goto exit;
         }
-        this->nextlist() = block->nextlist();
+        this->nextlist_ = block->nextlist();
     } else if (ifst->can_accept(input.peek())) {
         if (!ifst->parse(input, context)) {
             res = false;
             goto exit;
         }
-        this->nextlist() = ifst->nextlist();
+        this->nextlist_ = ifst->nextlist();
     } else if (whilest->can_accept(input.peek())) {
         if (!whilest->parse(input, context)) {
             res = false;
             goto exit;
         }
-        this->nextlist() = whilest->nextlist();
+        this->nextlist_ = whilest->nextlist();
     } else if (dowh->can_accept(input.peek())) {
         if (!dowh->parse(input, context)) {
             res = false;
             goto exit;
         }
-        this->nextlist() = dowh->nextlist();
+        this->nextlist_ = dowh->nextlist();
     } else if (forst->can_accept(input.peek())) {
         if (!forst->parse(input, context)) {
             res = false;
             goto exit;
         }
-        this->nextlist() = forst->nextlist();
+        this->nextlist_ = forst->nextlist();
     } else if (empty->can_accept(input.peek())) {
         if (!empty->parse(input, context)) {
             res = false;
@@ -146,7 +143,7 @@ bool statement::parse(tkstream& input, analyze_context& context)
             res = false;
             goto exit;
         }
-        this->nextlist() = ret->nextlist();
+        this->nextlist_ = ret->nextlist();
     } else {
         context.on_error(input.peek());
         res = false;
@@ -197,10 +194,10 @@ bool block_st::parse(tkstream& input, analyze_context& context)
     opt_decl_sts *decls = new opt_decl_sts;
     statements *sts = new statements;
     
-    advance_if(token_id::REV_BEGIN);
+    advance_if(token_id::OP_LBRAC);
     parse_use(decls);
     parse_use(sts);
-    advance_if(token_id::REV_END);
+    advance_if(token_id::OP_RBRAC);
     
     this->nextlist_ = sts->nextlist();
 
@@ -212,7 +209,7 @@ exit:
 
 bool block_st::can_accept(token cur_tk)
 {
-    return cur_tk.id() == token_id::REV_BEGIN;
+    return cur_tk.id() == token_id::OP_LBRAC;
 }
 
 bool decl_st::parse(tkstream& input, analyze_context& context)
@@ -257,9 +254,9 @@ bool if_st::parse(tkstream& input, analyze_context& context)
     int trueaddr, falseaddr = -1;
     
     advance_if(token_id::REV_IF);
-    advance_if(token_id::OP_LBRAC);
+    advance_if(token_id::OP_LPAREN);
     parse_use(exp);
-    advance_if(token_id::OP_RBRAC);
+    advance_if(token_id::OP_RPAREN);
 
     trueaddr = context.next_address();
     parse_use(st);
@@ -310,7 +307,7 @@ bool else_st::parse(tkstream& input, analyze_context& context)
     advance_if(token_id::REV_ELSE);
     parse_use(st);
     
-    this->nextlist() = st->nextlist();
+    this->nextlist_ = st->nextlist();
     
 exit:
     if (nullptr != st) delete st;
@@ -334,11 +331,11 @@ bool while_st::parse(tkstream& input, analyze_context& context)
     int beginaddr, staddr;
     
     advance_if(token_id::REV_WHILE);
-    advance_if(token_id::OP_LBRAC);
+    advance_if(token_id::OP_LPAREN);
     
     beginaddr = context.next_address();
     parse_use(exp);
-    advance_if(token_id::OP_RBRAC);
+    advance_if(token_id::OP_RPAREN);
     
     staddr = context.next_address();
     parse_use(st);
@@ -350,7 +347,7 @@ bool while_st::parse(tkstream& input, analyze_context& context)
                            context.generate("jmp", "", "", oss.str()));
         
         context.back_patch(exp->true_list(), staddr);
-        this->nextlist() = exp->false_list();
+        this->nextlist_ = exp->false_list();
     }
     
 exit:
@@ -380,13 +377,13 @@ bool do_while_st::parse(tkstream& input, analyze_context& context)
     staddr = context.next_address();
     parse_use(st);
     advance_if(token_id::REV_WHILE);
-    advance_if(token_id::OP_LBRAC);
+    advance_if(token_id::OP_LPAREN);
     parse_use(exp);
-    advance_if(token_id::OP_RBRAC);
+    advance_if(token_id::OP_RPAREN);
     advance_if(token_id::DELIM_SEMI);
     
     context.back_patch(exp->true_list(), staddr);
-    this->nextlist() = exp->false_list();
+    this->nextlist_ = exp->false_list();
     
 exit:
     if (nullptr != exp) delete exp;
@@ -414,7 +411,7 @@ bool for_st::parse(tkstream& input, analyze_context& context)
     ostringstream bss, sss, stpss;
     
     advance_if(token_id::REV_FOR);
-    advance_if(token_id::OP_LBRAC);
+    advance_if(token_id::OP_LPAREN);
     parse_use(initexp);
     advance_if(token_id::DELIM_SEMI);
     
@@ -427,7 +424,7 @@ bool for_st::parse(tkstream& input, analyze_context& context)
     bss << beginaddr;
     context.generate("jmp", "", "", bss.str());
     
-    advance_if(token_id::OP_RBRAC);
+    advance_if(token_id::OP_RPAREN);
     staddr = context.next_address();
     parse_use(st);
     context.back_patch(st->nextlist(), context.next_address());
@@ -436,7 +433,7 @@ bool for_st::parse(tkstream& input, analyze_context& context)
     
     // semantic
     context.back_patch(boolexp->true_list(), staddr);
-    this->nextlist() = boolexp->false_list();
+    this->nextlist_ = boolexp->false_list();
 exit:
     if (nullptr != initexp) delete initexp;
     if (nullptr != boolexp) delete boolexp;
@@ -648,13 +645,7 @@ bool starter_part::parse(tkstream& input, analyze_context& context)
         goto exit;
     }
     
-    exit:
-    if (nullptr != decl && decl->first_expr()) delete decl->first_expr();
-    if (nullptr != decl && nullptr != decl->item_list()) {
-        for (auto item : decl->item_list()->items()) {
-            if (nullptr != item.init_expr()) delete item.init_expr();
-        }
-    }
+exit:
     
     if (nullptr != tp) delete tp;
     if (nullptr != decl) delete decl;
@@ -670,64 +661,66 @@ bool decl_st_part::parse(tkstream& input, analyze_context& context)
     
     bool res = true;
     
-    list_ = nullptr;
-    fst_exp_ = nullptr;
+    decl_list *list_ = nullptr;
+    expr *fst_exp_ = nullptr;
+    int_list *dims = nullptr;
     
-    if (input.peek().id() == token_id::OP_ASSIGN) {
-        input.advance();
-        fst_exp_ = new expr;
-        
-        parse_use(fst_exp_);
+    
+    // add the first to symbol table
+    if (!context.table().new_variable(name_, type_)) {
+        context.on_error("Redefinition of " + name_ + ".");
+        res = false;
+        goto exit;
     }
     
-    if (input.peek().id() == token_id::DELIM_COMMA) {
-        list_ = new decl_list(type_);
-        
-        input.advance();
-        parse_use(list_);
-        advance_if(token_id::DELIM_SEMI);
-    }
-    
+    // with optional init expression
     {
-        symbol_table& tbl = context.table();
-        // The first one
-        if (!tbl.new_variable(name_, type_)) {
-            context.on_error("Redefinition of " + name_ + ".");
-            res = false;
-            goto exit;
-        }
-        // if has init
-        if (fst_exp_ != nullptr) {
-            variable_desc desc;
-            context.entry_of(name_, desc);
-            context.generate("mov", fst_exp_->place(), "",
+        variable_desc desc;
+        context.entry_of(name_, desc);
+        if (input.peek().id() == token_id::OP_ASSIGN) {
+            // optional assignment expression
+            input.advance();
+            fst_exp_ = new expr;
+            parse_use(fst_exp_);
+            
+            // mov expr result to variable
+            context.generate("mov", fst_exp_->place(), "", 
                              desc.address_str());
-        }
-        // if there are more
-        if (list_ != nullptr) {
-            for (decl_item item : list_->items()) {
-                if (!tbl.new_variable(item.name(), type_)) {
-                    context.on_error("Redefinition of " + item.name() + ".");
-                    res = false;
-                    goto exit;
-                }
-                if (item.init_expr() != nullptr) {
-                    variable_desc desc;
-                    context.entry_of(name_, desc);
-                    context.generate("mov", item.init_expr()->place(), "",
-                                     desc.address_str());
-                }
-            }
+        } else if (input.peek().id() == token_id::OP_LSBRAC) {
+            // optional array declaration
+            input.advance();
+            dims = new int_list;
+            parse_use(dims);
+            advance_if(token_id::OP_RSBRAC);
+            
+            string arr_type = context.table()
+                    .register_array(type_, dims->items());
+            desc.type(arr_type);
         }
     }
+    
+    // if there are more
+    if (input.peek().id() == token_id::DELIM_COMMA) {
+        input.advance();
+        list_ = new decl_list(type_);
+        parse_use(list_);
+        
+    }
+    advance_if(token_id::DELIM_SEMI);
     
 exit:
+    if (nullptr != list_) delete list_;
+    if (nullptr != fst_exp_) delete fst_exp_;
+    if (nullptr != dims) delete dims;
     return res;
 }
 
 bool decl_st_part::can_accept(token cur_tk)
 {
-    return true;
+    return cur_tk.id() == token_id::OP_ASSIGN
+        || cur_tk.id() == token_id::OP_LSBRAC
+        || cur_tk.id() == token_id::DELIM_COMMA
+        || cur_tk.id() == token_id::DELIM_SEMI;
 }
 
 bool ret_st::parse(tkstream& input, analyze_context& context)

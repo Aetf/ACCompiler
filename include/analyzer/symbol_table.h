@@ -42,6 +42,8 @@ public:
     
     bool new_function(const string& name, const string& ret_type, string& sign);
     
+    void new_func_params(const vector<func_arg>& args);
+    
     string new_temporary(const string& type);
     
     string register_array(const string& base_type, const vector<int>& dims);

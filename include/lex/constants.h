@@ -8,23 +8,38 @@
 using std::string;
 using std::unordered_map;
 
+const int REV_MIN = 1000;
+const int OP_MIN = 2000;
+const int DELIM_MIN = 3000;
+const int CONST_MIN = 4000;
+const int COMM_MIN = 5000;
 enum class token_id : int
 {
-    ILLIGEL,
-    REV_PROGRAM, REV_BEGIN, REV_END, REV_RETURN,
+    ILLIGEL = 0,
+    
+    IDENTIFIER = 1,
+    
+    REV_PROGRAM = REV_MIN,
+    REV_RETURN,
     REV_INT, REV_FLOAT, REV_CHAR,
-    REV_AND, REV_OR, REV_NOT, REV_IF, REV_THEN, REV_ELSE,
+    REV_IF, REV_THEN, REV_ELSE,
     REV_WHILE, REV_DO, REV_FOR,
+    
+    OP_ASSIGN = OP_MIN,
+    OP_ADDR, OP_DOT,
+    OP_LPAREN, OP_RPAREN, OP_LSBRAC, OP_RSBRAC, OP_LBRAC, OP_RBRAC,
     OP_ADD, OP_MUL, OP_SUB, OP_DIV,
-    OP_ADDR,
-    OP_LBRAC, OP_RBRAC, OP_DOT, OP_LSBRAC, OP_RSBRAC,
-    OP_ASSIGN,
+    OP_AND, OP_OR, OP_NOT,
     OP_GT, OP_LT, OP_EQ, OP_GE, OP_LE, OP_NE,
-    DELIM_COMMA, DELIM_SEMI,
+    
+    DELIM_COMMA = DELIM_MIN,
+    DELIM_SEMI,
     DELIM_COMMENT_INL, DELIM_COMMENT_BEG, DELIM_COMMENT_END,
-    CONST_INT, CONST_FLOAT, CONST_STR, CONST_BOOL, CONST_CHAR,
-    COMMENT,
-    IDENTIFIER
+    
+    CONST_INT = CONST_MIN,
+    CONST_FLOAT, CONST_STR, CONST_BOOL, CONST_CHAR,
+    
+    COMMENT = COMM_MIN,
 };
 
 std::ostream& operator<<(std::ostream &os, const token_id &id);
@@ -47,15 +62,10 @@ public:
     reserved_dict()
     {
         (*this)["program"] = token_id::REV_PROGRAM;
-        (*this)["{"] = token_id::REV_BEGIN;
-        (*this)["}"] = token_id::REV_END;
         (*this)["return"] = token_id::REV_RETURN;
         (*this)["int"] = token_id::REV_INT;
         (*this)["float"] = token_id::REV_FLOAT;
         (*this)["char"] = token_id::REV_CHAR;
-        (*this)["&&"] = token_id::REV_AND;
-        (*this)["||"] = token_id::REV_OR;
-        (*this)["!"] = token_id::REV_NOT;
         (*this)["if"] = token_id::REV_IF;
         (*this)["then"] = token_id::REV_THEN;
         (*this)["else"] = token_id::REV_ELSE;
@@ -74,8 +84,12 @@ public:
         (*this)["*"] = token_id::OP_MUL;
         (*this)["-"] = token_id::OP_SUB;
         (*this)["/"] = token_id::OP_DIV;
-        (*this)["("] = token_id::OP_LBRAC;
-        (*this)[")"] = token_id::OP_RBRAC;
+        (*this)["{"] = token_id::OP_LBRAC;
+        (*this)["}"] = token_id::OP_RBRAC;
+        (*this)["["] = token_id::OP_LSBRAC;
+        (*this)["]"] = token_id::OP_RSBRAC;
+        (*this)["("] = token_id::OP_LPAREN;
+        (*this)[")"] = token_id::OP_RPAREN;
         (*this)["."] = token_id::OP_DOT;
         (*this)["="] = token_id::OP_ASSIGN;
         (*this)[">"] = token_id::OP_GT;
@@ -85,8 +99,10 @@ public:
         (*this)["<="] = token_id::OP_LE;
         (*this)["!="] = token_id::OP_NE;
         (*this)["&"] = token_id::OP_ADDR;
-        (*this)["["] = token_id::OP_LSBRAC;
-        (*this)["]"] = token_id::OP_RSBRAC;
+        (*this)["&&"] = token_id::OP_AND;
+        (*this)["||"] = token_id::OP_OR;
+        (*this)["!"] = token_id::OP_NOT;
+        
     }
 };
 

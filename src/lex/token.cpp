@@ -58,37 +58,36 @@ bool token::good() const
 bool token::iscontant() const
 {
     int id = static_cast<int>(_id);
-    return id >= 33 && id <= 36;
+    return id >= CONST_MIN && id < COMM_MIN;
 }
 
 bool token::isdelimiter() const
 {
     int id = static_cast<int>(_id);
-    return id >= 28 && id <= 32;
+    return id >= DELIM_MIN && id < CONST_MIN;
 }
 
 bool token::isidentifier() const
 {
-    int id = static_cast<int>(_id);
-    return id >= 38 && id <= 38;
+    return _id == token_id::IDENTIFIER;
 }
 
 bool token::isoperator() const
 {
     int id = static_cast<int>(_id);
-    return id >= 14 && id <= 27;
+    return id >= OP_MIN && id < DELIM_MIN;
 }
 
 bool token::isreserved() const
 {
     int id = static_cast<int>(_id);
-    return id >= 1 && id <= 13;
+    return id >= REV_MIN && id < OP_MIN;
 }
 
 bool token::iscomment() const
 {
     int id = static_cast<int>(_id);
-    return id >= 37 && id <= 37;
+    return id >= COMM_MIN;
 }
 
 const dictionary& token::reserved()
@@ -198,7 +197,7 @@ bool token::isescapse(int ch)
     return ch == '\\';
 }
 
-bool token::isopfront(int ch)
+bool token::OP_RPAREN(int ch)
 {
     for(auto entry : token::operators())
     {
@@ -208,7 +207,7 @@ bool token::isopfront(int ch)
     return false;
 }
 
-bool token::isdlfront(int ch)
+bool token::isdlchar(int ch)
 {
     for(auto entry : token::delimiter())
     {

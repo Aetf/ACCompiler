@@ -24,6 +24,7 @@ array_desc::array_desc(const string& array_type)
     while (iss >> dim) {
         iss.ignore(1, ',');
         dimensions_.push_back(dim);
+        total_cnt_ *= dim;
     }
 }
 
@@ -78,7 +79,18 @@ variable_desc::variable_desc(const string& name, const string& type)
 const string variable_desc::address_str() const
 {
     ostringstream oss;
-    oss << place_ << "+" << offset_;
+    if (is_param_) {
+        oss << "[" << place_;
+        if (offset_ != 0) {
+            oss << "+" << offset_;
+        }
+        oss << "]";
+    } else {
+        oss << place_;
+        if (offset_ != 0) {
+            oss << "+" << offset_;
+        }
+    }
     return oss.str();
 }
 
