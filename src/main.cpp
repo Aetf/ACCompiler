@@ -42,16 +42,13 @@ int main(int argc, char **argv)
         });
         
         starter S;
-        analyze_context context(oss2.str());
+        analyze_context context(oss1.str(), oss2.str());
         
         if (S.parse(tkz, context)) {
             // output the intermidiate code
             context.flush();
-            cout << "done.\n" << endl;
-        } else {
-            cout << "Errors found.\n" << endl;
         }
-        
+        cout << context.to_statistic_str() << endl << endl;
     }
     return 0;
 }

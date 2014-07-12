@@ -209,13 +209,14 @@ public:
 class decl_st_part : public non_terminal
 {
 public:
-    decl_st_part(const string& name, const string& type)
-        :name_(name), type_(type) { }
+    decl_st_part(token name, const string& type)
+        :name_tk_(name), name_(name.text()), type_(type) { }
     virtual ~decl_st_part() { }
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
     
 private:
+    token name_tk_;
     string name_;
     string type_;
 };

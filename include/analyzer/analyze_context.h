@@ -6,6 +6,7 @@
 #include <string>
 
 #include "analyzer/symbol_table.h"
+#include "lex/textpointer.h"
 #include "interm/quadruple.h"
 
 using std::string;
@@ -16,11 +17,15 @@ class token;
 class analyze_context
 {
 public:
-    analyze_context(const string &output_file);
+    analyze_context(const string &input_file, const string &output_file);
     
+    void on_note(const string& msg, const text_pointer& pointer);
+    void on_note(const string& msg);
     void on_error(token cur_tk);
     void on_error(const string &msg);
+    void on_error(const string &msg, const text_pointer& pointer);
     void on_critical(const string &msg);
+    void on_critical(const string &msg, const text_pointer& pointer);
     
     int generate(const string &op = "",
                  const string &arg1 = "", const string &arg2 = "",
@@ -54,6 +59,10 @@ public:
     void enter_func(func_entry entry);
     void exit_func();
     
+    int error_count() const { return error_cnt_; }
+    int warning_count() const { return warning_cnt_; }
+    string to_statistic_str() const;
+    
     vector<quadruple>& codes() { return codes_; }
     
     symbol_table& table() { return sym_table_; }
@@ -63,10 +72,14 @@ public:
 private:
     
     string o_path_;
+    string i_path_;
     vector<quadruple> codes_;
     symbol_table sym_table_;
     func_entry curr_func_;
     bool in_func_;
+    
+    int error_cnt_;
+    int warning_cnt_;
 };
 
 #endif

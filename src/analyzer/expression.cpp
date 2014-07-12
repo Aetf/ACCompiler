@@ -298,7 +298,7 @@ bool expr_item::parse(tkstream& input, analyze_context& context)
         }
     }
     else {
-        context.on_error("Expected expression here.");
+        context.on_error("Expected expression here.", input.peek().position());
         res = false;
         goto exit;
     }
@@ -327,7 +327,7 @@ bool expr_item::function_call(token id, opt_aparams *ap, analyze_context &contex
     func_entry entry = context.table().find_func_entry(sig);
     if (!context.table().valid_entry(entry)) {
         // not defined yet
-        context.on_error("Undefined function " + sig);
+        context.on_error("Undefined function " + sig, id.position());
         res = false;
         goto exit;
     }        
@@ -353,22 +353,24 @@ bool expr_item::array_access(token id, array_dim* ad, analyze_context& context)
     // array element
     variable_desc desc;
     if (!context.entry_of(id.text(), desc)) {
-        context.on_error("Undefined variable " + id.text());
+        context.on_error("Undefined variable " + id.text(), id.position());
         return false;
     }
     // check if match the definition
     if (!is_array(desc.type())) {
-        context.on_error("Only array type can use operator [] ");
+        context.on_error("Only array type can use operator [] ", id.position());
         return false;
     }
     // check dimension count
     array_desc adesc(desc.type());
     if (adesc.dimensions().size() != ad->items().size()) {
-        ostringstream oss;
-        oss << "Array dimension mismatch " << std::endl;
-        oss << "Need: " << adesc.elements_count() << std::endl;
-        oss << "Found: " << ad->items().size();
-        context.on_error(oss.str());
+        context.on_error("array dimension mismatch", id.position());
+        
+        ostringstream oss, oss2;
+        oss << "need: " << adesc.elements_count();
+        context.on_note(oss.str(), id.position());
+        oss2 << "found: " << ad->items().size();
+        context.on_note(oss2.str(), id.position());
         return false;
     }
     // generate code to calc offset

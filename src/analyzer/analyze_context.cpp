@@ -1,6 +1,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
@@ -29,30 +31,67 @@ std::ostream& operator<<(std::ostream& os, const token& tk)
     return os;
 }
 
-analyze_context::analyze_context(const std::string& output_file)
+analyze_context::analyze_context(const std::string& input_file, const std::string& output_file)
     :sym_table_(this)
 {
+    i_path_ = input_file;
     o_path_ = output_file;
     in_func_ = false;
+    error_cnt_ = 0;
+    warning_cnt_ = 0;
+}
+
+string analyze_context::to_statistic_str() const
+{
+    ostringstream oss;
+    if (error_cnt_ > 0) {
+        oss << error_cnt_ << " error"
+            << (error_cnt_>1?"s":"");
+    }
+    if (warning_cnt_ > 0) {
+        if (error_cnt_ > 0) oss << " and ";
+        
+        oss << warning_cnt_ << " warning"
+            << (warning_cnt_>1?"s":"");
+    }
+    if (error_cnt_ > 0 || warning_cnt_ > 0) {
+        oss <<" generated.";
+    } else {
+    }
+    return oss.str();
 }
 
 void analyze_context::on_error(token cur_tk)
 {
-    std::cout << "Error: "<< cur_tk << std::endl;
+    on_error("unexpected token", cur_tk.position());
 }
 
 void analyze_context::on_error(const string &msg)
 {
-    std::cout << msg << std::endl;
+    std::cout << "error: " << msg << std::endl;
 }
 
 void analyze_context::on_error(const string& msg, const text_pointer& pointer)
 {
-    ostringstream os;
+    error_cnt_ ++;
+    // prepare a file line.
+    ifstream ifs(i_path_);
+    path pifs(i_path_);
     string line_;
-    os << pointer.line << ":" << pointer.col << ": error: " << msg << '\n'
-    << line_ << '\n'
-    << string(pointer.col-1, ' ') << '^';
+    for (int lineno = 0; lineno < pointer.line; lineno++)
+    {
+        getline (ifs, line_);
+    }
+    string line(boost::replace_all_copy(line_, "\t", " "));
+    if (boost::algorithm::ends_with(line, token::curr_linefeed())) {
+        line.erase(line.size() - token::curr_linefeed().size());
+    }
+    
+    ostringstream os;
+    os << pifs.filename().c_str() << ":" << pointer.line << ":" << pointer.col
+        << ": error: " << msg << '\n'
+        << line << '\n'
+        << string(pointer.col-1, ' ') << '^';
     
     std::cout << os.str() << std::endl;
 }
@@ -62,12 +101,41 @@ void analyze_context::on_critical(const string &msg)
     std::cout << msg << std::endl;
 }
 
-void analyze_context::on_critical(const string& msg, const text_pointer& pointer, const string& line)
+void analyze_context::on_note(const string &msg, const text_pointer& pointer)
 {
+    path pifs(i_path_);
     ostringstream os;
-    string line_(line);
-    os << pointer.line << ":" << pointer.col << ": error: " << msg << '\n'
-    << line_ << '\n'
+    
+    os << pifs.filename().c_str() << ":" << pointer.line << ":" << pointer.col
+    << ": note: " << msg;
+    
+    std::cout << os.str() << std::endl;
+}
+
+void analyze_context::on_note(const string &msg)
+{
+    std::cout << "note: " << msg << std::endl;
+}
+
+void analyze_context::on_critical(const string& msg, const text_pointer& pointer)
+{
+    // prepare a file line.
+    ifstream ifs(i_path_);
+    path pifs(i_path_);
+    string line_;
+    for (int lineno = 0; lineno < pointer.line; lineno++)
+    {
+        getline (ifs, line_);
+    }
+    string line(boost::replace_all_copy(line_, "\t", " "));
+    if (boost::algorithm::ends_with(line, token::curr_linefeed())) {
+        line.erase(line.size() - token::curr_linefeed().size());
+    }
+    
+    ostringstream os;
+    os << pifs.filename().c_str() << ":" << pointer.line << ":" << pointer.col
+    << ": error: " << msg << '\n'
+    << line << '\n'
     << string(pointer.col-1, ' ') << '^';
     
     std::cout << os.str() << std::endl;

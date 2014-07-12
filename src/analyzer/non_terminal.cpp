@@ -145,7 +145,7 @@ bool statement::parse(tkstream& input, analyze_context& context)
         }
         this->nextlist_ = ret->nextlist();
     } else {
-        context.on_error(input.peek());
+        context.on_error("expected statement here", input.peek().position());
         res = false;
         goto exit;
     }
@@ -509,7 +509,7 @@ bool decl_item::parse(tkstream& input, analyze_context& context)
     {
         symbol_entry entry;
         if (!context.table().new_variable(item_.text(), base_type_, entry)) {
-            context.on_error("Redefinition of " + item_.text() + ".");
+            context.on_error("redefinition of " + item_.text(), item_.position());
             res = false;
             goto exit;
         }
@@ -556,7 +556,7 @@ bool type_name::parse(tkstream& input, analyze_context& context)
     bool res = true;
     is_ptr_ = false;
     if (!this->can_accept(input.peek())) {
-        context.on_error(input.peek());
+        context.on_error("expected type name here", input.peek().position());
         res = false;
         goto exit;
     }
@@ -626,8 +626,8 @@ bool starter_part::parse(tkstream& input, analyze_context& context)
     type = tp->type_string();
     if (type_has_star) type += "*";
     
-    decl = new decl_st_part(idtk.text(), type);
-    fdef = new func_def_part(idtk.text(), type);
+    decl = new decl_st_part(idtk, type);
+    fdef = new func_def_part(idtk, type);
     
     if (decl->can_accept(input.peek())) {
         if (!decl->parse(input, context)) {
@@ -640,7 +640,7 @@ bool starter_part::parse(tkstream& input, analyze_context& context)
             goto exit;
         }
     } else {
-        context.on_error(input.peek());
+        context.on_error("expected variable declaration or function declaration", input.peek().position());
         res = false;
         goto exit;
     }
@@ -668,7 +668,7 @@ bool decl_st_part::parse(tkstream& input, analyze_context& context)
     
     // add the first to symbol table
     if (!context.table().new_variable(name_, type_)) {
-        context.on_error("Redefinition of " + name_ + ".");
+        context.on_error("redefinition of " + name_tk_.text(), name_tk_.position());
         res = false;
         goto exit;
     }
@@ -776,7 +776,18 @@ bool statements::parse(tkstream& input, analyze_context& context)
     
     statement st;
     statements sts;
-    parse_use(&st);
+    
+    if (st.can_accept(input.peek())) {
+        if (!st.parse(input, context)) {
+            // ignore the error, seek to next ';'
+            // try to continue.
+            while(input.peek().good()
+                    && input.peek().id() != token_id::DELIM_SEMI) {
+                input.advance();
+            }
+            input.advance();
+        }
+    }
     
     if (sts.can_accept(input.peek())) {
         

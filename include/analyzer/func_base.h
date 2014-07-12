@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "analyzer/non_terminal.h"
+#include "lex/token.h"
 
 using std::string;
 using std::vector;
@@ -60,8 +61,8 @@ private:
 class func_def_part : public func_base
 {
 public:
-    func_def_part(const string &name, const string &ret_type)
-        : name_(name), ret_type_(ret_type) { }
+    func_def_part(token name, const string &ret_type)
+        : name_tk_(name), name_(name.text()), ret_type_(ret_type) { }
     virtual ~func_def_part() {}
     virtual bool parse(tkstream& input, analyze_context& context) override;
     virtual bool can_accept(token cur_tk) override;
@@ -72,6 +73,7 @@ public:
 private:
     bool sign_;
     int entry_;
+    token name_tk_;
     string name_;
     string ret_type_;
 };

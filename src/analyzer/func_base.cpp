@@ -62,10 +62,11 @@ bool func_def_part::parse(tkstream& input, analyze_context& context)
         if (!context.table().new_function(name_, ret_type_, fps->actual_nt()->items(), sign)) {
             entry = context.table().find_func_entry(sign);
             
-            string msg = "Functions that differ only in their return type cannot be overloaded\n";
-            msg += ret_type_ + " " + sign + ";\n";
-            msg += "Previous declaration: \n" + entry->second.ret_type() + " " + sign + ";";
-            context.on_error(msg);
+            context.on_error("functions that differ only in their return type cannot be overloaded",
+                             name_tk_.position());
+            
+            string msg = "previous declaration: \n\t" + entry->second.ret_type() + " " + sign + ";";
+            context.on_note(msg);
             res = false;
             goto exit;
         }
