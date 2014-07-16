@@ -15,6 +15,7 @@ std::ostream& operator<<(std::ostream &os, const token_id &id)
         case token_id::REV_ELSE: return os << "REV_ELSE";
         case token_id::REV_WHILE: return os << "REV_WHILE";
         case token_id::REV_DO: return os << "REV_DO";
+        case token_id::REV_FOR: return os << "REV_FOR";
         
         case token_id::OP_ADD: return os << "OP_ADD";
         case token_id::OP_MUL: return os << "OP_MUL";
