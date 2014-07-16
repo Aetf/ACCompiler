@@ -7,8 +7,7 @@ int func1 (float f, char ch)
 	i = i + arr[2,1,2];
 	return func2 (&i);
 }
-
-char func1 (float f, char ch)
+int func2 (int* p)
 {
 	if (i == 0)
 	{
