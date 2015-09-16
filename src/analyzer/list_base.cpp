@@ -35,7 +35,7 @@ bool list_base<Item_Type>::parse(tkstream& input, analyze_context& context)
 
 exit:
     if(nullptr != list_more) delete list_more;
-    return true;
+    return res;
 }
 
 
@@ -253,7 +253,7 @@ bool array_dim::parse_single(tkstream& input, analyze_context& context)
     
     items().push_back(exp);
 exit:
-    return true;
+    return res;
 }
 
 /*
@@ -291,7 +291,7 @@ bool decl_sts::parse_single(tkstream& input, analyze_context& context)
     parse_use(&st);
     
 exit:
-    return true;
+    return res;
 }
 
 
@@ -337,7 +337,7 @@ bool int_list::parse_single(tkstream& input, analyze_context& context)
     
     items().push_back(value);
 exit:
-    return true;
+    return res;
 }
 
 
