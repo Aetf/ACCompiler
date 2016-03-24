@@ -81,3 +81,5 @@ clean:
 	rm -rf $(INTM)
 distclean: clean
 	rm -rf $(TARGET) $(TARGETD)
+
+.PHONY: install clean distclean
